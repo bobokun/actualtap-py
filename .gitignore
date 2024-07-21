@@ -1,0 +1,14 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*pytest_cache*
+*.log*
+*.yml
+.vscode/*
+!.github/**
+*.svg
+.venv*
+.tox
+*.env
+actualtap_py.egg-info/

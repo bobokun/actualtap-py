@@ -1,0 +1,6 @@
+actualpy @ git+https://github.com/bvanelli/actualpy.git@46-rule-validation-error
+fastapi==0.111.1
+pydantic
+pydantic-settings
+pyyaml
+uvicorn==0.30.3
