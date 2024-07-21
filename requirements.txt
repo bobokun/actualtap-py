@@ -1,4 +1,4 @@
-actualpy @ git+https://github.com/bvanelli/actualpy.git@46-rule-validation-error
+actualpy==0.2.0
 fastapi==0.111.1
 pydantic
 pydantic-settings
