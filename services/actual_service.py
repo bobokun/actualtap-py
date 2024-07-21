@@ -15,7 +15,7 @@ class ActualService:
         self.client = None
 
     def add_transaction(self, account: str, amount: float, date: str, payee: str, notes: str = None, cleared: bool = False):
-        with Actual(settings.actual_url, password=settings.actual_password, file=settings.actual_budget_id) as actual:
+        with Actual(settings.actual_url, password=settings.actual_password, file=settings.actual_budget) as actual:
             actual_acount_id = settings.account_mappings.get(account, settings.actual_default_account_id)
             date = convert_to_date(date)
             import_id = generate_custom_id()
@@ -45,7 +45,7 @@ class ActualService:
             return t
 
     def login(self):
-        with Actual(settings.actual_url, password=settings.actual_password, file=settings.actual_budget_id) as actual:
+        with Actual(settings.actual_url, password=settings.actual_password, file=settings.actual_budget) as actual:
             get_transactions(actual.session)
         return {"message": "Login successful"}
 

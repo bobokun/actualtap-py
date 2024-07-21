@@ -4,8 +4,8 @@ api_key: "527D6AAA-B22A-4D48-9DC8-C203139E5531"
 actual_url: "https://actual.yourdomain.com"
 # Password for your Actual Budget Server
 actual_password: "superSecretPassword"
-# The Unique Id of your Budget
-actual_budget_id: "8B51B58D-3A0D-4B5B-A41F-DE574306A4F2"
+# The name of your budget or Sync ID of the budget
+actual_budget: "My budget"
 # The Unique Id of an account you want transactions to default too
 actual_default_account_id: "8AF657D4-4811-42C7-8272-E299A8DAC43A"
 # If the Merchant name is missing, but the Amount still has a value, a transaction can be created with this as the payee name
