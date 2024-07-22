@@ -1,7 +1,7 @@
 import os
-from distutils.core import setup
 
 from setuptools import find_packages
+from setuptools import setup
 
 # User-friendly description from README.md
 current_directory = os.path.dirname(os.path.abspath(__file__))
