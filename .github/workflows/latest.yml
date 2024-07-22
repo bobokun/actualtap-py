@@ -10,12 +10,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: set lower case owner name
-        run: |
-          echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
-        env:
-          OWNER: '${{ github.repository_owner }}'
-
       - name: Check Out Repo
         uses: actions/checkout@v4
 
@@ -29,11 +23,11 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ env.OWNER_LC }}
+          username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@master
+        uses: docker/setup-qemu-action@v2
         with:
           platforms: all
 
@@ -51,4 +45,8 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/actualtap-py:latest
-            ghcr.io/${{ env.OWNER_LC }}/actualtap-py:latest
+            ghcr.io/${{ github.repository_owner }}/actualtap-py:latest
+
+permissions:
+  packages: write
+  contents: read
