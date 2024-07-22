@@ -1,7 +1,7 @@
 FROM python:3.11-alpine
-ARG BRANCH_NAME=master
-ENV BRANCH_NAME ${BRANCH_NAME}
-ENV TINI_VERSION v0.19.0
+ARG BRANCH_NAME=main
+ENV BRANCH_NAME=${BRANCH_NAME}
+ENV TINI_VERSION=v0.19.0
 ARG CONFIG_DIR=/config
 ENV CONFIG_DIR=/config
 
@@ -11,9 +11,10 @@ COPY requirements.txt /
 RUN echo "**** install system packages ****" \
  && apk update \
  && apk upgrade \
- && apk add --no-cache tzdata gcc g++ git libxml2-dev libxslt-dev zlib-dev bash curl wget jq grep sed coreutils findutils unzip p7zip ca-certificates tini\
+ && apk add --no-cache tzdata gcc g++ git libxml2-dev libxslt-dev zlib-dev bash curl wget jq grep sed coreutils findutils unzip p7zip ca-certificates tini libffi-dev rust cargo \
+ && pip3 install --no-cache-dir --upgrade pip \
  && pip3 install --no-cache-dir --upgrade --requirement /requirements.txt \
- && apk del gcc g++ libxml2-dev libxslt-dev zlib-dev \
+ && apk del gcc g++ libxml2-dev libxslt-dev zlib-dev libffi-dev rust cargo \
  && rm -rf /requirements.txt /tmp/* /var/tmp/* /var/cache/apk/*
 
 COPY . /app
