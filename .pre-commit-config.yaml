@@ -25,12 +25,12 @@ repos:
     hooks:
       - id: yamllint
         args: [--format, parsable, --strict]
-        exclude: ^.github/
+        exclude: ^(\.github/|docker-compose\.yml$)
   - repo: https://github.com/lyz-code/yamlfix
     rev: 1.16.0
     hooks:
       - id: yamlfix
-        exclude: ^.github/
+        exclude: ^(\.github/|docker-compose\.yml$)
   - repo: https://github.com/pycqa/isort
     rev: 5.13.2
     hooks:

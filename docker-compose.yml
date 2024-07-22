@@ -1,0 +1,8 @@
+services:
+  actualtap-py:
+    container_name: actualtap-py
+    build: .
+    ports:
+      - 8000:8000
+    volumes:
+      - /your/path/here:/config
