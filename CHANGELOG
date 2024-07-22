@@ -1,0 +1,9 @@
+# Initial Release
+- Inital Release of Actualtap-py
+- Special Thanks to @MattFaz for the original idea of [ActualTap](https://github.com/MattFaz/actualtap)
+
+# What's Different between this and ActualTap?
+- Written in Python
+- Uses config.yml file over .env variables
+- Saves the request into a wallet.json in your phone so you can re-submit it if you have no internet access
+- Allows mapping of Tap to Pay accounts -> Actual account ID via config file
