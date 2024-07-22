@@ -11,15 +11,8 @@ COPY requirements.txt /
 
 # install packages
 RUN echo "**** install system packages ****" \
- && apk update \
- && apk upgrade \
- && apk add --no-cache --virtual .build-deps \
-    gcc \
-    musl-dev \
-    libffi-dev \
-    rust \
-    cargo \
- && apk add --no-cache \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends \
     git \
     bash \
     curl \
@@ -29,12 +22,15 @@ RUN echo "**** install system packages ****" \
     sed \
     coreutils \
     findutils \
-    unzip \
+    gcc \
+    libffi-dev \
+    rustc \
+    cargo \
     tini \
  && pip3 install --no-cache-dir --upgrade pip \
  && pip3 install --no-cache-dir --upgrade --requirement /requirements.txt \
- && apk del .build-deps \
- && rm -rf /root/.cache /requirements.txt /tmp/* /var/tmp/* /var/cache/apk/*
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/* /requirements.txt /tmp/* /var/tmp/*
 
  COPY . .
 
