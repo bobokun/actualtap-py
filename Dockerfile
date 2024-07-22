@@ -1,4 +1,4 @@
-FROM python:3.12-alpine
+FROM python:3.12-slim
 ARG BRANCH_NAME=main
 ENV BRANCH_NAME=${BRANCH_NAME}
 ENV TINI_VERSION=v0.19.0
@@ -16,6 +16,9 @@ RUN echo "**** install system packages ****" \
  && apk add --no-cache --virtual .build-deps \
     gcc \
     musl-dev \
+    libffi-dev \
+    rust \
+    cargo \
  && apk add --no-cache \
     git \
     bash \
