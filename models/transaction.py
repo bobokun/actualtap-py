@@ -1,13 +1,15 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import Optional
 
 from pydantic import BaseModel
+from pydantic import Field
 from pydantic import validator
 
 
 class Transaction(BaseModel):
     account: str = ""
-    amount: Optional[float] = 0
+    amount: Optional[Decimal] = Field(default=Decimal(0), decimal_places=2)
     date: Optional[str] = datetime.now().strftime("%b %d, %Y")
     payee: Optional[str] = ""
     notes: Optional[str] = ""
@@ -16,5 +18,5 @@ class Transaction(BaseModel):
     @validator("amount", pre=True)
     def empty_str_to_zero(cls, v):
         if v == "":
-            return 0
+            return Decimal(0)
         return v
