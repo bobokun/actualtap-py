@@ -14,7 +14,7 @@ def add_transaction(transaction: Transaction):
     try:
         actual_service.add_transaction(
             account=transaction.account,
-            amount=transaction.amount,
+            amount=transaction.amount * -1,
             date=transaction.date,
             payee=transaction.payee,
             notes=transaction.notes,
