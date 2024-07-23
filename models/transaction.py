@@ -4,7 +4,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 from pydantic import Field
-from pydantic import validator
+from pydantic import field_validator
 
 
 class Transaction(BaseModel):
@@ -15,7 +15,7 @@ class Transaction(BaseModel):
     notes: Optional[str] = ""
     cleared: Optional[bool] = False
 
-    @validator("amount", pre=True)
+    @field_validator("amount")
     def empty_str_to_zero(cls, v):
         if v == "":
             return Decimal(0)
