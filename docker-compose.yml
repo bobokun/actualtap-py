@@ -1,7 +1,7 @@
 services:
   actualtap-py:
     container_name: actualtap-py
-    build: .
+    image: ghcr.io/bobokun/actualtap-py:latest
     ports:
       - 8000:8000
     volumes:
