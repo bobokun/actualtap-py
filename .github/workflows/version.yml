@@ -7,7 +7,7 @@ on:
 
 jobs:
 
-  docker-develop:
+  docker-version:
     runs-on: ubuntu-latest
 
     steps:
@@ -63,4 +63,4 @@ jobs:
 
 permissions:
   packages: write
-  contents: read
+  contents: write

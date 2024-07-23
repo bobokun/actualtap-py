@@ -16,3 +16,6 @@ jobs:
         with:
           version-command: |
             cat VERSION
+
+permissions:
+  contents: write
