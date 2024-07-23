@@ -6,8 +6,11 @@ from actual.queries import get_ruleset
 from actual.queries import get_transactions
 
 from core.config import settings
+from core.logs import MyLogger
 from core.security import generate_custom_id
 from core.util import convert_to_date
+
+logger = MyLogger()
 
 
 class ActualService:
@@ -19,7 +22,7 @@ class ActualService:
             actual_acount_id = settings.account_mappings.get(account, settings.actual_default_account_id)
             date = convert_to_date(date)
             import_id = generate_custom_id()
-            print(
+            logger.info(
                 f"Adding Transaction: Account: {account}, Account_ID: {actual_acount_id} Amount: {Decimal(amount)}, "
                 f"Date: {date}, Imported ID: {import_id}, Payee: {payee}, Notes: {notes}, Cleared: {cleared}"
             )
