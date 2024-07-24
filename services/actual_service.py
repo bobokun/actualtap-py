@@ -1,3 +1,4 @@
+import json
 from decimal import Decimal
 
 from actual import Actual
@@ -22,10 +23,17 @@ class ActualService:
             actual_acount_id = settings.account_mappings.get(account, settings.actual_default_account_id)
             date = convert_to_date(date)
             import_id = generate_custom_id()
-            logger.info(
-                f"Adding Transaction: Account: {account}, Account_ID: {actual_acount_id} Amount: {Decimal(amount)}, "
-                f"Date: {date}, Imported ID: {import_id}, Payee: {payee}, Notes: {notes}, Cleared: {cleared}"
-            )
+            transaction_info = {
+                "Account": account,
+                "Account_ID": actual_acount_id,
+                "Amount": str(Decimal(amount)),
+                "Date": str(date),
+                "Imported ID": import_id,
+                "Payee": payee,
+                "Notes": notes,
+                "Cleared": cleared,
+            }
+            logger.info("\n" + json.dumps(transaction_info, indent=4))
             # validate account_id
             if not actual_acount_id:
                 raise ValueError(f"Account name '{account}' is not mapped to an Actual Account ID.")
