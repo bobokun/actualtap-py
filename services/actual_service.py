@@ -4,7 +4,6 @@ from decimal import Decimal
 from actual import Actual
 from actual.queries import create_transaction
 from actual.queries import get_ruleset
-from actual.queries import get_transactions
 
 from core.config import settings
 from core.logs import MyLogger
@@ -54,11 +53,6 @@ class ActualService:
             rs.run(t)
             actual.commit()
             return t
-
-    def login(self):
-        with Actual(settings.actual_url, password=settings.actual_password, file=settings.actual_budget) as actual:
-            get_transactions(actual.session)
-        return {"message": "Login successful"}
 
 
 # Initialize the service
