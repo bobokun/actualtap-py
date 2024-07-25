@@ -1,6 +1,7 @@
-# Initial Release
-- Inital Release of Actualtap-py
-- Special Thanks to @MattFaz for the original idea of [ActualTap](https://github.com/MattFaz/actualtap)
+# New Updates
+- Added logging
+- Secure all endpoints with API github-token
+- Fixed formatting in logs
 
 # What's Different between this and ActualTap?
 - Written in Python
