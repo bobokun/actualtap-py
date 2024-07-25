@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 from typing import Dict
 
 import yaml
@@ -18,13 +18,17 @@ class Settings(BaseSettings):
         env_file = ".env"
 
 
+# Define config_path globally
+config_path = Path("/config/config.yml")  # Set default config path
+base_dir = Path(__file__).resolve().parent
+fallback_config_path = base_dir / ".." / "config" / "config.yml"
+if not config_path.exists():
+    config_path = fallback_config_path
+    if not config_path.exists():
+        raise FileNotFoundError("Configuration file not found at '/config/config.yml'")
+
+
 def load_config():
-    config_path = "/config/config.yml"  # Set default config path
-    if not os.path.exists(config_path):
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        config_path = os.path.join(base_dir, "..", "config", "config.yml")
-        if not os.path.exists(config_path):
-            raise FileNotFoundError("Configuration file not found at '/config/config.yml'")
     with open(config_path) as file:
         config = yaml.safe_load(file)
         if not config:

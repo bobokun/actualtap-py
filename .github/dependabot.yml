@@ -5,9 +5,19 @@
 
 version: 2
 updates:
-  - package-ecosystem: "pip" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "pip"
+    directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
+    target-branch: "develop"
     assignees:
       - "bobokun"
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: daily
+    assignees:
+      - "bobokun"
+    target-branch: "develop"
+    ignore:
+      - dependency-name: "salsify/action-detect-and-tag-new-version"
