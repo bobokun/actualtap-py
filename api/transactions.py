@@ -1,4 +1,6 @@
 from decimal import Decimal
+from typing import List
+from typing import Union
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -12,17 +14,16 @@ router = APIRouter()
 
 
 @router.post("/", dependencies=[Depends(get_api_key)])
-def add_transaction(transaction: Transaction):
+def add_transaction(transactions: Union[Transaction, List[Transaction]]):
     try:
-        actual_service.add_transaction(
-            account=transaction.account,
-            amount=transaction.amount * Decimal(-1),
-            date=transaction.date,
-            payee=transaction.payee,
-            notes=transaction.notes,
-            cleared=transaction.cleared,
-        )
-        return {"message": "Transaction added successfully"}
+        if isinstance(transactions, Transaction):
+            transactions = [transactions]
+
+        for transaction in transactions:
+            transaction.amount *= Decimal(-1)
+            actual_service.add_transaction(**transaction.dict())
+
+        return {"message": "Transactions added successfully"}
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
