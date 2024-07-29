@@ -1,6 +1,5 @@
 from fastapi import Depends
 from fastapi import FastAPI
-from fastapi import HTTPException
 from fastapi.openapi.docs import get_redoc_html
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
@@ -8,7 +7,6 @@ from fastapi.openapi.utils import get_openapi
 from api import transactions
 from core.config import redact_sensitive_settings
 from core.security import get_api_key
-from services.actual_service import actual_service
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
@@ -25,17 +23,6 @@ def get_settings():
     keys_to_remove = ["api_key", "actual_password"]  # List the keys to remove
     filtered_settings = redact_sensitive_settings(keys_to_remove)
     return filtered_settings
-
-
-@app.get("/login", dependencies=[Depends(get_api_key)])
-def login():
-    try:
-        actual_service.login()
-        return {"message": "Login Successful"}
-    except ValueError as ve:
-        raise HTTPException(status_code=400, detail=str(ve))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Override the /docs endpoint
