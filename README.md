@@ -57,10 +57,10 @@ The app will be running on port `8000`
 ## iOS Setup
 
 1. Import these 2 shortcuts:
-    - <a href="https://www.icloud.com/shortcuts/64599820cebb4706bada8ba50e070305">Wallet Transactions to JSON - Shared</a>
-    - <a href="https://www.icloud.com/shortcuts/9aa82b07bef249e697411be8474b8b8d">Wallet to ActualTap Py - Shared</a>
+    - <a href="https://www.icloud.com/shortcuts/eb9ab397923540fe9be7be878138ac4d">Wallet Transactions to JSON - Shared</a>
+    - <a href="https://www.icloud.com/shortcuts/a983e1b1d72b4a3ba0580b722d61013c">Wallet to ActualTap - Shared</a>
 2. Open Shortcuts app
-3. Edit the <a href="https://www.icloud.com/shortcuts/9aa82b07bef249e697411be8474b8b8d">Wallet to ActualTap Py - Shared</a> shorcut
+3. Edit the <a href="https://www.icloud.com/shortcuts/a983e1b1d72b4a3ba0580b722d61013c">Wallet to ActualTap - Shared</a> shorcut
     - Under the Dictionary block, modify the following values
        | **Key**    | **Text**                             | **Example**                             |
        | -----------| ------------------------------------ | --------------------------------------- |
@@ -83,7 +83,7 @@ The app will be running on port `8000`
        | `name`     | (_shortcut Input_ -> _Name_)         |
 
     - Run shortcut -> Wallet Transactions to JSON - Shared
-    - Run shortcut -> Wallet to ActualTap Py - Shared
+    - Run shortcut -> Wallet to ActualTap - Shared
 
 ## Android Setup
 
