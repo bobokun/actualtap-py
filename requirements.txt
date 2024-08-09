@@ -1,6 +1,6 @@
 actualpy==0.2.0
-fastapi==0.111.1
+fastapi==0.112.0
 pydantic
 pydantic-settings
 pyyaml
-uvicorn==0.30.3
+uvicorn==0.30.5
