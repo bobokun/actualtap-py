@@ -3,6 +3,8 @@ import os
 from setuptools import find_packages
 from setuptools import setup
 
+from core import __version__
+
 # User-friendly description from README.md
 current_directory = os.path.dirname(os.path.abspath(__file__))
 try:
@@ -18,28 +20,22 @@ setup(
     packages=find_packages("."),
     # Start with a small number and increase it with
     # every change you make https://semver.org
-    version="1.0.0",
+    version=__version__,
     # Chose a license from here: https: //
     # help.github.com / articles / licensing - a -
     # repository. For example: MIT
-    license="",
+    license="GNU v3.0",
     # Short description of your library
-    description="",
+    description="Automatically create transactions in Actual Budget when you use Tap-to-Pay on a mobile device",
     # Long description of your library
     long_description=long_description,
     long_description_content_type="text/markdown",
     # Your name
-    author="",
+    author="bobokun",
     # Your email
     author_email="",
     # Either the link to your github or to your website
-    url="",
+    url="https://github.com/bobokun",
     # Link from which the project can be downloaded
-    download_url="",
-    # List of keywords
-    keywords=[],
-    # List of packages to install with this one
-    install_requires=[],
-    # https://pypi.org/classifiers/
-    classifiers=[],
+    download_url="https://github.com/bobokun/actualtap-py",
 )
