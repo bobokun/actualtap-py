@@ -19,7 +19,7 @@ WORKDIR /app
 COPY requirements.txt /
 
 # Install necessary system dependencies and Tini
-RUN apk add --no-cache gcc musl-dev libffi-dev tini
+RUN apk add --no-cache gcc musl-dev libffi-dev tini git
 
 # Copy the rest of the application code into the container
 COPY . .
