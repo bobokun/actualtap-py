@@ -1,7 +1,7 @@
 name: Docker Version Release
 
 on:
-  create:
+  push:
     tags:
       - v*
 
@@ -53,6 +53,7 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/actualtap-py:${{ steps.get_version.outputs.VERSION }}
             ghcr.io/${{ github.repository_owner }}/actualtap-py:${{ steps.get_version.outputs.VERSION }}
+
       - name: Create release
         id: create_release
         uses: softprops/action-gh-release@v2
