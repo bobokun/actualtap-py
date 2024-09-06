@@ -1,4 +1,2 @@
 # New Updates
-- Output to console as well as log files
-- Support for multiple transactions at once
-- Removed unused endpoints
+- Udpated actualpy to 0.4.0
