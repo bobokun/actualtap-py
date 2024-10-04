@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     actual_default_account_id: str
     actual_backup_payee: str
     account_mappings: Dict[str, str]
+    log_level: str = "INFO"
 
     class Config:
         env_file = ".env"
