@@ -1,2 +1,7 @@
 # New Updates
-- Updated actualpy to 0.4.0
+- Updated actualpy to 0.6.0
+
+# Bug fixes
+- Better error handling exception logging
+- New config option for setting log level
+- Allow for flexibility not having the trailing slash for /transactions endpoint

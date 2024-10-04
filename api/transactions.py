@@ -13,7 +13,8 @@ from services.actual_service import actual_service
 router = APIRouter()
 
 
-@router.post("/", dependencies=[Depends(get_api_key)])
+@router.post("/transactions", dependencies=[Depends(get_api_key)])
+@router.post("/transactions/", dependencies=[Depends(get_api_key)])
 def add_transactions(transactions: Union[Transaction, List[Transaction]]):
     try:
         if isinstance(transactions, Transaction):

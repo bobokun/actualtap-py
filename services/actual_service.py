@@ -59,7 +59,7 @@ class ActualService:
                 submitted_transactions.append(t)
             rs = get_ruleset(actual.session)
             rs.run(submitted_transactions)
-            logger.info("\n" + json.dumps(transaction_info_list, indent=4))
+            logger.info("\n" + json.dumps(transaction_info_list, indent=2))
             actual.commit()
             return transaction_info_list
 
