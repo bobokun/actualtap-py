@@ -1,13 +1,28 @@
-from datetime import date
-from datetime import datetime
+from datetime import date, datetime
+from typing import Union
 
 
-def convert_to_date(date_str: str) -> date:
-    # Define the format of the input date string
-    date_format = "%b %d, %Y"
+def convert_to_date(date_input: Union[str, datetime]) -> date:
+    if isinstance(date_input, datetime):
+        return date_input.date()
 
-    # Parse the date string into a datetime object
-    datetime_obj = datetime.strptime(date_str, date_format)
+    # Try different date formats
+    date_formats = [
+        "%Y-%m-%d",  # 2024-11-25 (ISO format)
+        "%b %d, %Y",  # Nov 25, 2024
+        "%b %d %Y",  # Nov 25 2024
+    ]
 
-    # Extract and return the date part
-    return datetime_obj.date()
+    for date_format in date_formats:
+        try:
+            datetime_obj = datetime.strptime(date_input, date_format)
+            return datetime_obj.date()
+        except ValueError:
+            continue
+
+    # If none of the formats worked, raise an error with examples
+    raise ValueError(
+        "Invalid date format. Accepted formats:\n"
+        "- YYYY-MM-DD (e.g. 2024-11-25)\n"
+        "- MMM DD, YYYY (e.g. Nov 25, 2024)\n"
+    )
