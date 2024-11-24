@@ -1,4 +1,5 @@
-from datetime import date, datetime
+from datetime import date
+from datetime import datetime
 from typing import Union
 
 
@@ -22,7 +23,5 @@ def convert_to_date(date_input: Union[str, datetime]) -> date:
 
     # If none of the formats worked, raise an error with examples
     raise ValueError(
-        "Invalid date format. Accepted formats:\n"
-        "- YYYY-MM-DD (e.g. 2024-11-25)\n"
-        "- MMM DD, YYYY (e.g. Nov 25, 2024)\n"
+        "Invalid date format. Accepted formats:\n" "- YYYY-MM-DD (e.g. 2024-11-25)\n" "- MMM DD, YYYY (e.g. Nov 25, 2024)\n"
     )
