@@ -1,13 +1,12 @@
 from decimal import Decimal
 from typing import List
-from typing import Union
 
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from core.security import get_api_key
-from models.transaction import Transaction
+
+# from models.transaction import Transaction
+from schemas.schemas import Transaction
 from services.actual_service import actual_service
 
 router = APIRouter()
@@ -15,10 +14,14 @@ router = APIRouter()
 
 @router.post("/transactions", dependencies=[Depends(get_api_key)])
 @router.post("/transactions/", dependencies=[Depends(get_api_key)])
-def add_transactions(transactions: Union[Transaction, List[Transaction]]):
+def add_transactions(transactions: List[Transaction]):
+    # check if there is a body
+    if not transactions:
+        raise HTTPException(status_code=400, detail="No transactions provided")
     try:
-        if isinstance(transactions, Transaction):
-            transactions = [transactions]
+        # Remove this check since FastAPI already ensures we get a list
+        # if isinstance(transactions, Transaction):
+        #     transactions = [transactions]
 
         for transaction in transactions:
             transaction.amount *= Decimal(-1)  # Invert the amount

@@ -1,15 +1,11 @@
 import json
 
-from fastapi import Depends
-from fastapi import FastAPI
-from fastapi import HTTPException
-from fastapi import Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exception_handlers import (
     http_exception_handler as default_http_exception_handler,
 )
 from fastapi.exceptions import RequestValidationError
-from fastapi.openapi.docs import get_redoc_html
-from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 
@@ -57,11 +53,16 @@ async def openapi():
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     logger.error(f"Validation error for request {request.method} {request.url}:\n{json.dumps(exc.errors(), indent=2)}")
-    logger.error(f"Request body: {json.dumps(await request.json(), indent=2)}")
+    try:
+        body = await request.json()
+        logger.error(f"Request body: {json.dumps(body, indent=2)}")
+    except Exception as e:
+        logger.error(f"Error reading request body: {str(e)}")
+        body = None
 
     return JSONResponse(
         status_code=422,
-        content={"detail": exc.errors(), "body": await request.json()},
+        content={"detail": exc.errors(), "body": body},
     )
 
 
@@ -70,7 +71,12 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     # Log the details of the bad request
     if exc.status_code == 400 or exc.status_code == 500:
         logger.error(f"Validation error for request {request.method} {request.url}:\n{json.dumps(exc.detail, indent=2)}")
-        logger.error(f"Request body: {json.dumps(await request.json(), indent=2)}")
+        try:
+            body = await request.json()
+            logger.error(f"Request body: {json.dumps(body, indent=2)}")
+        except Exception as e:
+            logger.error(f"Error reading request body: {str(e)}")
+            body = None
 
     # Return the default HTTP exception response
     return await default_http_exception_handler(request, exc)
