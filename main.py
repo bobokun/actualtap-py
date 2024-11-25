@@ -56,7 +56,23 @@ async def openapi():
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    logger.error(f"Validation error for request {request.method} {request.url}:\n{json.dumps(exc.errors(), indent=2)}")
+    errors = []
+    for error in exc.errors():
+        error_msg = error.get("msg", "")
+        if isinstance(error_msg, str) and "Invalid date format" in error_msg:
+            errors.append(
+                {
+                    "loc": error.get("loc", []),
+                    "msg": "Invalid date format. Accepted formats:\n- YYYY-MM-DD (e.g. 2024-11-25)\n- MMM DD, YYYY (e.g. Nov 25, 2024)\n- MMM DD YYYY (e.g. Nov 25 2024)",
+                    "type": "value_error",
+                }
+            )
+        else:
+            errors.append(error)
+
+    logger.error(
+        f"Validation error for request {request.method} {request.url}:\n{json.dumps(errors, indent=2)}"
+    )
     try:
         body = await request.json()
         logger.error(f"Request body: {json.dumps(body, indent=2)}")
@@ -66,7 +82,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
     return JSONResponse(
         status_code=422,
-        content={"detail": exc.errors(), "body": body},
+        content={"detail": errors, "body": body},
     )
 
 
