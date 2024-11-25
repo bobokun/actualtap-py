@@ -1,8 +1,11 @@
-from datetime import date, datetime
+from datetime import date
+from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel
+from pydantic import Field
+from pydantic import field_validator
 
 from core.util import convert_to_date
 
@@ -12,9 +15,7 @@ class Transaction(BaseModel):
     amount: Decimal = Field(default=Decimal(0), description="Transaction amount")
     date: datetime = Field(
         default_factory=datetime.now,
-        description=(
-            "Transaction date in formats: YYYY-MM-DD, MMM DD, YYYY, or MMM DD YYYY"
-        ),
+        description=("Transaction date in formats: YYYY-MM-DD, MMM DD, YYYY, or MMM DD YYYY"),
     )
     payee: Optional[str] = None
     notes: Optional[str] = None

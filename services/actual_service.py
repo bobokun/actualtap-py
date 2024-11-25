@@ -30,13 +30,9 @@ class ActualService:
         ) as actual:
             for tx in transactions:
                 # Map account name to Actual account ID
-                account_id = settings.account_mappings.get(
-                    tx.account, settings.actual_default_account_id
-                )
+                account_id = settings.account_mappings.get(tx.account, settings.actual_default_account_id)
                 if not account_id:
-                    raise ValueError(
-                        f"Account name '{tx.account}' is not mapped to an Actual Account ID."
-                    )
+                    raise ValueError(f"Account name '{tx.account}' is not mapped to an Actual Account ID.")
 
                 # Convert date and generate import ID
                 date = convert_to_date(tx.date)

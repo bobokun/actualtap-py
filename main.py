@@ -70,9 +70,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         else:
             errors.append(error)
 
-    logger.error(
-        f"Validation error for request {request.method} {request.url}:\n{json.dumps(errors, indent=2)}"
-    )
+    logger.error(f"Validation error for request {request.method} {request.url}:\n{json.dumps(errors, indent=2)}")
     try:
         body = await request.json()
         logger.error(f"Request body: {json.dumps(body, indent=2)}")
