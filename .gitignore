@@ -13,3 +13,6 @@ __pycache__/
 .tox
 *.env
 actualtap_py.egg-info/
+
+# API Testing Client
+bruno/
