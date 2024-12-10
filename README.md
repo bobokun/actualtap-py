@@ -47,6 +47,7 @@ To run Actual Tap locally _(i.e. for development or not containerised)_:
 
 -   `$ cp config/config.yml.sample config/config.yml`
 -   Edit the `config.yml` file accordingly
+-   Run locally using `uvicorn main:app --host 0.0.0.0 --port 8000`
 
 To run Actual Tap in docker ensure you edit variables in the `docker-compose.yml` file.
 
