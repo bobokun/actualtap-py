@@ -63,7 +63,10 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             errors.append(
                 {
                     "loc": error.get("loc", []),
-                    "msg": "Invalid date format. Accepted formats:\n- YYYY-MM-DD (e.g. 2024-11-25)\n- MMM DD, YYYY (e.g. Nov 25, 2024)\n- MMM DD YYYY (e.g. Nov 25 2024)",
+                    "msg": "Invalid date format. Accepted formats:\n"
+                    "- YYYY-MM-DD (e.g. 2024-11-25)\n"
+                    "- MMM DD, YYYY (e.g. Nov 25, 2024)\n"
+                    "- MMM DD YYYY (e.g. Nov 25 2024)",
                     "type": "value_error",
                 }
             )
