@@ -1,6 +1,6 @@
-actualpy==0.6.1
-fastapi[standard]==0.115.4
+actualpy==0.8.0
+fastapi[standard]==0.115.6
 pydantic
 pydantic-settings
 pyyaml
-uvicorn==0.32.0
+uvicorn==0.32.1
