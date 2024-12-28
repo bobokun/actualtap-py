@@ -12,6 +12,7 @@ def convert_to_date(date_input: Union[str, datetime]) -> date:
         "%Y-%m-%d",  # 2024-11-25 (ISO format)
         "%b %d, %Y",  # Nov 25, 2024
         "%b %d %Y",  # Nov 25 2024
+        "%d %b %Y",  # 25 Nov 2024
     ]
 
     for date_format in date_formats:
