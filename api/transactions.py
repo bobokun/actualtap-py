@@ -11,6 +11,7 @@ router = APIRouter()
 
 
 @router.post("/transactions")
+@router.post("/transactions/")
 def add_transactions(transactions: List[Transaction]):
     # check if there is a body
     if not transactions:
