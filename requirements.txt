@@ -1,5 +1,5 @@
 actualpy==0.11.0
-fastapi[standard]==0.115.11
+fastapi[standard]==0.115.12
 pydantic
 pydantic-settings
 pyyaml
