@@ -21,7 +21,7 @@ repos:
     hooks:
       - id: autopep8
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.35.1  # or higher tag
+    rev: v1.37.0  # or higher tag
     hooks:
       - id: yamllint
         args: [--format, parsable, --strict]
@@ -32,7 +32,7 @@ repos:
       - id: yamlfix
         exclude: ^(\.github/|docker-compose\.yml$)
   - repo: https://github.com/pycqa/isort
-    rev: 6.0.0
+    rev: 6.0.1
     hooks:
       - id: isort
         name: isort (python)
