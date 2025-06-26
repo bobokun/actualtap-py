@@ -26,6 +26,7 @@ class ActualService:
         with Actual(
             settings.actual_url,
             password=settings.actual_password,
+            encryption_password=settings.actual_encryption_password,
             file=settings.actual_budget,
         ) as actual:
             for tx in transactions:
