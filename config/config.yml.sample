@@ -4,6 +4,8 @@ api_key: "527D6AAA-B22A-4D48-9DC8-C203139E5531"
 actual_url: "https://actual.yourdomain.com"
 # Password for your Actual Budget Server
 actual_password: "superSecretPassword"
+# Encryption passwordAdd commentMore actions
+actual_encryption_password: "None" # or "superSecretEncryptionPassword"
 # The name of your budget or Sync ID of the budget
 actual_budget: "My budget"
 # The Unique Id of an account you want transactions to default too
