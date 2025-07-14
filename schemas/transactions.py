@@ -24,6 +24,9 @@ class Transaction(BaseModel):
     @field_validator("amount", mode="before")
     def validate_amount(cls, v):
         try:
+            # Replace comma with period if present
+            if isinstance(v, str) and "," in v:
+                v = v.replace(",", ".")
             return Decimal(str(v)) if v else Decimal(0)
         except Exception:
             raise ValueError("Invalid amount format. Must be a valid decimal number.")
