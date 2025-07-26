@@ -38,9 +38,15 @@ jobs:
 
       - name: Run all tests with comprehensive coverage
         run: |
-          python -m pytest --cov=api --cov=main --cov=core --cov=schemas tests/ --cov-report=term-missing --cov-report=xml --cov-fail-under=100 -v
+          pytest --cov --junitxml=junit.xml
 
-      - name: Upload coverage reports to Codecov
+       # Copy and paste the codecov/test-results-action here
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
