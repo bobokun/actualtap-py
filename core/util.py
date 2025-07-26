@@ -3,9 +3,12 @@ from datetime import datetime
 from typing import Union
 
 
-def convert_to_date(date_input: Union[str, datetime]) -> date:
+def convert_to_date(date_input: Union[str, datetime, date]) -> date:
     if isinstance(date_input, datetime):
         return date_input.date()
+
+    if isinstance(date_input, date):
+        return date_input
 
     # Try different date formats
     date_formats = [

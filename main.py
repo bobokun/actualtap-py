@@ -58,6 +58,10 @@ async def openapi():
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     errors = []
     for error in exc.errors():
+        # Ensure that the error context is serializable
+        if "ctx" in error and isinstance(error["ctx"].get("error"), ValueError):
+            error["ctx"]["error"] = str(error["ctx"]["error"])
+
         error_msg = error.get("msg", "")
         if isinstance(error_msg, str) and "Invalid date format" in error_msg:
             errors.append(
