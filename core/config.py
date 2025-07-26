@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     api_key: str
     actual_url: str
     actual_password: str
+    actual_encryption_password: str
     actual_budget: str
     actual_default_account_id: str
     actual_backup_payee: str
