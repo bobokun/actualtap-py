@@ -1,13 +1,12 @@
 name: Docker Version Release
 
 on:
-  push:
-    tags:
-      - v*
+  create:
 
 jobs:
 
   docker-version:
+    if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
     runs-on: ubuntu-latest
 
     steps:
@@ -40,7 +39,7 @@ jobs:
 
       - name: Get the version
         id: get_version
-        run: echo "VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
+        run: echo "VERSION=${{ github.ref_name }}" >> $GITHUB_OUTPUT
 
       - name: Build and push
         id: docker_build

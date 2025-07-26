@@ -40,11 +40,7 @@ jobs:
         run: |
           python -m pytest --cov=api --cov=main --cov=core --cov=schemas tests/ --cov-report=term-missing --cov-report=xml --cov-fail-under=100 -v
 
-      - name: Upload coverage reports
+      - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
-        if: always()
         with:
-          files: ./coverage.xml
-          flags: unittests
-          name: codecov-umbrella
           token: ${{ secrets.CODECOV_TOKEN }}
