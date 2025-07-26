@@ -2,15 +2,15 @@
 minimal: venv
 
 venv: requirements.txt setup.py tox.ini
-	tox -e venv
+	python3 -m tox -e venv
 
 .PHONY: test
 test:
-	tox -e tests
+	python3 -m tox -e tests
 
 .PHONY: pre-commit
 pre-commit:
-	tox -e pre-commit
+	python3 -m tox -e pre-commit
 
 .PHONY: clean
 clean:
@@ -21,4 +21,4 @@ clean:
 
 .PHONY: install-hooks
 install-hooks:
-	tox -e install-hooks
+	python3 -m tox -e install-hooks

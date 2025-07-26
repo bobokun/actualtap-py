@@ -1,6 +1,6 @@
 # New Updates
-- Updated actualpy to 0.8.0
+- Updated actualpy to 0.13.0
+- Add support for encrypted budget files (Closes #85) - Thanks to @realjoshparker
 
 # Bug fixes
-- Better error handling
-- Added additional date formats
+- Better error handling with better validation (Closes #79) - Thanks to @ollema
