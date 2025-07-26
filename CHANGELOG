@@ -4,3 +4,4 @@
 
 # Bug fixes
 - Allow optional encryption password
+- Fixes [#50](https://github.com/bobokun/actualtap-py/issues/50)
