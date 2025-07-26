@@ -1,6 +1,11 @@
 name: Run Tests on PR
+
+# Workflow-level permissions: Set to minimal read-only access
+# This overrides any inherited repository/organization permissions
 permissions:
-  contents: read
+  contents: read              # Allow reading repository contents
+  actions: read              # Allow reading workflow artifacts and information
+  metadata: read             # Allow reading repository metadata
 
 on:
   pull_request:
@@ -26,7 +31,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
-          pip install pytest-cov
+          pip install -e .
 
-      - name: Run tests with coverage
-        run: pytest --cov=api.transactions tests/
+      - name: Run all tests with comprehensive coverage
+        run: |
+          python -m pytest --cov=api --cov=main --cov=core --cov=schemas tests/ --cov-report=term-missing --cov-report=xml --cov-fail-under=100 -v
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        if: always()
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
