@@ -33,6 +33,10 @@ jobs:
           pip install -r requirements-dev.txt
           pip install -e .
 
+      - name: Set up test configuration
+        run: |
+          cp config/config.yml.sample config/config.yml
+
       - name: Run all tests with comprehensive coverage
         run: |
           python -m pytest --cov=api --cov=main --cov=core --cov=schemas tests/ --cov-report=term-missing --cov-report=xml --cov-fail-under=100 -v
