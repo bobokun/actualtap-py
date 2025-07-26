@@ -5,7 +5,7 @@ actual_url: "https://actual.yourdomain.com"
 # Password for your Actual Budget Server
 actual_password: "superSecretPassword"
 # Encryption passwordAdd commentMore actions
-actual_encryption_password: "None" # or "superSecretEncryptionPassword"
+actual_encryption_password: "superSecretEncryptionPassword"
 # The name of your budget or Sync ID of the budget
 actual_budget: "My budget"
 # The Unique Id of an account you want transactions to default too
