@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Dict
+from typing import Optional
 
 import yaml
 from pydantic_settings import BaseSettings
@@ -9,7 +10,7 @@ class Settings(BaseSettings):
     api_key: str
     actual_url: str
     actual_password: str
-    actual_encryption_password: str
+    actual_encryption_password: Optional[str] = None
     actual_budget: str
     actual_default_account_id: str
     actual_backup_payee: str
