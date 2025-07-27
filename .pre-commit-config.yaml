@@ -55,9 +55,13 @@ repos:
         args: [--config=.flake8]
   - repo: local
     hooks:
-      - id: make-test
-        name: Run make test
-        entry: make test
+      - id: run-tests
+        name: Run tests
+        entry: >-
+          bash -c 'if [ -f "./venv/bin/python" ]; then
+          ./venv/bin/python -m pytest tests/ -v --tb=short;
+          else python3 -m pytest tests/ -v --tb=short; fi'
         language: system
         pass_filenames: false
         always_run: true
+        types: [python]
