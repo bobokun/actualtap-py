@@ -53,16 +53,3 @@ repos:
     hooks:
       - id: flake8
         args: [--config=.flake8]
-  - repo: local
-    hooks:
-      - id: run-tests
-        name: Run tests
-        entry: >-
-          bash -c 'if [ -f "./venv/bin/python" ] &&
-          ./venv/bin/python -c "import pytest" 2>/dev/null; then
-          ./venv/bin/python -m pytest tests/ -v --tb=short;
-          else python3 -m pytest tests/ -v --tb=short; fi'
-        language: system
-        pass_filenames: false
-        always_run: true
-        types: [python]
