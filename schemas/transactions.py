@@ -1,5 +1,4 @@
-from datetime import date
-from datetime import datetime
+import datetime
 from decimal import Decimal
 from typing import Optional
 
@@ -13,9 +12,9 @@ from core.util import convert_to_date
 class Transaction(BaseModel):
     account: str = Field(..., description="Account name or ID is required")
     amount: Decimal = Field(default=Decimal(0), description="Transaction amount")
-    date: datetime = Field(
-        default_factory=datetime.now,
-        description=("Transaction date in formats: YYYY-MM-DD, MMM DD, YYYY, or MMM DD YYYY"),
+    date: datetime.date = Field(
+        default_factory=datetime.date.today,
+        description="Transaction date in formats: YYYY-MM-DD, MMM DD, YYYY, or MMM DD YYYY",
     )
     payee: Optional[str] = None
     notes: Optional[str] = None
@@ -35,9 +34,9 @@ class Transaction(BaseModel):
     def parse_date(cls, value):
         try:
             parsed_date = convert_to_date(value)
-            # If convert_to_date returns a date object, convert it to datetime
-            if isinstance(parsed_date, date) and not isinstance(parsed_date, datetime):
-                return datetime.combine(parsed_date, datetime.min.time())
+            # If convert_to_date returns a datetime object convert it to a date object
+            if isinstance(parsed_date, datetime.datetime):
+                return parsed_date.date()
             return parsed_date
         except ValueError as e:
             raise ValueError(str(e))

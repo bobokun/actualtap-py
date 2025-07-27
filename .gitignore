@@ -10,9 +10,15 @@ __pycache__/
 !.github/**
 *.svg
 .venv*
+venv/
 .tox
 *.env
 actualtap_py.egg-info/
 
 # API Testing Client
 bruno/
+
+# Coverage data
+.coverage
+coverage.xml
+htmlcov/

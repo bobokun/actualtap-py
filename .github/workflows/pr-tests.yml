@@ -1,0 +1,52 @@
+name: Run Tests on PR
+
+# Workflow-level permissions: Set to minimal read-only access
+# This overrides any inherited repository/organization permissions
+permissions:
+  contents: read              # Allow reading repository contents
+  actions: read              # Allow reading workflow artifacts and information
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check Out Repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install -e .
+
+      - name: Set up test configuration
+        run: |
+          cp config/config.yml.sample config/config.yml
+
+      - name: Run all tests with comprehensive coverage
+        run: |
+          pytest --cov --junitxml=junit.xml
+
+       # Copy and paste the codecov/test-results-action here
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
