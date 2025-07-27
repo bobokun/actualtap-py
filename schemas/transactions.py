@@ -33,6 +33,10 @@ class Transaction(BaseModel):
     @field_validator("date", mode="before")
     def parse_date(cls, value):
         try:
-            return convert_to_date(value)
+            parsed_date = convert_to_date(value)
+            # If convert_to_date returns a datetime object convert it to a date object
+            if isinstance(parsed_date, datetime.datetime):
+                return parsed_date.date()
+            return parsed_date
         except ValueError as e:
             raise ValueError(str(e))

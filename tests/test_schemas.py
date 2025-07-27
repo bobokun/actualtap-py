@@ -16,7 +16,7 @@ class TestTransactionSchema:
         transaction = Transaction(account="Test Account")
         assert transaction.account == "Test Account"
         assert transaction.amount == Decimal("0")
-        assert isinstance(transaction.date, datetime)
+        assert isinstance(transaction.date, date)
         assert transaction.payee is None
         assert transaction.notes is None
         assert transaction.cleared is False
@@ -28,7 +28,7 @@ class TestTransactionSchema:
         )
         assert transaction.account == "Test Account"
         assert transaction.amount == Decimal("100.50")
-        assert isinstance(transaction.date, datetime)
+        assert isinstance(transaction.date, date)
         assert transaction.payee == "Test Payee"
         assert transaction.notes == "Test notes"
         assert transaction.cleared is True
@@ -75,7 +75,7 @@ class TestTransactionSchema:
     def test_date_validation_iso_format(self):
         """Test date validation with ISO format"""
         transaction = Transaction(account="Test", date="2024-01-01")
-        assert isinstance(transaction.date, datetime)
+        assert isinstance(transaction.date, date)
         assert transaction.date.year == 2024
         assert transaction.date.month == 1
         assert transaction.date.day == 1
@@ -84,20 +84,18 @@ class TestTransactionSchema:
         """Test date validation with datetime object"""
         test_date = datetime(2024, 1, 1, 12, 30, 45)
         transaction = Transaction(account="Test", date=test_date)
-        # The schema converts datetime to date and back to datetime at midnight
-        expected_date = datetime(2024, 1, 1, 0, 0)
+        # The schema converts datetime to date
+        expected_date = date(2024, 1, 1)
         assert transaction.date == expected_date
 
     def test_date_validation_date_object(self):
         """Test date validation with date object"""
         test_date = date(2024, 1, 1)
         transaction = Transaction(account="Test", date=test_date)
-        assert isinstance(transaction.date, datetime)
+        assert isinstance(transaction.date, date)
         assert transaction.date.year == 2024
         assert transaction.date.month == 1
         assert transaction.date.day == 1
-        assert transaction.date.hour == 0
-        assert transaction.date.minute == 0
 
     def test_date_validation_invalid_format(self):
         """Test date validation with invalid format"""
@@ -151,5 +149,6 @@ class TestTransactionSchema:
         test_datetime = datetime(2024, 1, 1, 12, 30, 45)
         with patch("schemas.transactions.convert_to_date", return_value=test_datetime):
             transaction = Transaction(account="Test", date="2024-01-01")
-            # This should hit line 41 where it returns the datetime directly
-            assert transaction.date == test_datetime
+            # Since the field is typed as date, Pydantic converts datetime to date
+            expected_date = date(2024, 1, 1)
+            assert transaction.date == expected_date

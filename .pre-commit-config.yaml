@@ -53,3 +53,11 @@ repos:
     hooks:
       - id: flake8
         args: [--config=.flake8]
+  - repo: local
+    hooks:
+      - id: make-test
+        name: Run make test
+        entry: make test
+        language: system
+        pass_filenames: false
+        always_run: true
