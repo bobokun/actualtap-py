@@ -85,6 +85,8 @@ The app will be running on port `8000`
 
     - Run shortcut -> Wallet Transactions to JSON - Shared
     - Run shortcut -> Wallet to ActualTap - Shared
+9. Create a blank `wallet.txt` file at the root of your iCloud Drive folder
+10. To prevent duplicate transaction issues, make sure to set the `wallet.txt` to "Keep Downloaded" at the root of your iCloud Drive folder in the Files app.
 
 ## Android Setup
 
