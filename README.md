@@ -23,7 +23,7 @@ Actual Tap uses FastAPI that utilises the <a href="https://github.com/bvanelli/a
 
 The primary purpose of Actual Tap is receive a POST request from mobile devices _(.e.g iOS Shortcuts)_ when a Tap to Pay transaction is made. Once the POST request is received Actual Tap will POST the Name and Amount to Actual Budget.
 
-In addition, there is a sample <a href="config/config.yml.sample">configuration file</a> that allows you to map between the Tap to Pay account and your Actual Account ID. It can be used as a template to create your own config.yaml within the same directory.
+In addition, there is a sample <a href="config/config.yml.sample">configuration file</a> that allows you to map between the Tap to Pay account and your Actual Account ID. It can be used as a template to create your own config.yml within the same directory.
 
 Ideal flow:
 
