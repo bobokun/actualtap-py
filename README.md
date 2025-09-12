@@ -23,7 +23,7 @@ Actual Tap uses FastAPI that utilises the <a href="https://github.com/bvanelli/a
 
 The primary purpose of Actual Tap is receive a POST request from mobile devices _(.e.g iOS Shortcuts)_ when a Tap to Pay transaction is made. Once the POST request is received Actual Tap will POST the Name and Amount to Actual Budget.
 
-In addition, there is a <a href="config/config.yml.sample">configuration file</a> that allows you to map between the Tap to Pay account and your Actual Account ID.
+In addition, there is a sample <a href="config/config.yml.sample">configuration file</a> that allows you to map between the Tap to Pay account and your Actual Account ID. It can be used as a template to create your own config.yml within the same directory.
 
 Ideal flow:
 
@@ -67,12 +67,10 @@ The app will be running on port `8000`
        | -----------| ------------------------------------ | --------------------------------------- |
        | `ActualTap URL`   | The URL of your ActualTap instance followed by `/transactions/`  |  https://actualtap-api.com/transactions/                    |
        | `API Key`     | The `api_key` defined in your <a href="config/config.yml.sample">configuration file</a> |    527D6AAA-B22A-4D48-9DC8-C203139E5531  |
-4. Import these two automations:
-5. Select Automations
-6. Create new Automation to Run Immediately
-7. When:
+4. Now, Create new Automation to Run Immediately
+5. When:
     - I tap any of x Wallet passes or payment cards
-8. Do:
+6. Do:
     - Receive transaction as input
     - Dictionary
 
@@ -85,6 +83,8 @@ The app will be running on port `8000`
 
     - Run shortcut -> Wallet Transactions to JSON - Shared
     - Run shortcut -> Wallet to ActualTap - Shared
+7. Create a blank `wallet.txt` file at the root of your iCloud Drive folder
+8. To prevent duplicate transaction issues, make sure to set the `wallet.txt` to "Keep Downloaded" at the root of your iCloud Drive folder in the Files app.
 
 ## Android Setup
 
