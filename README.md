@@ -59,9 +59,9 @@ The app will be running on port `8000`
 
 1. Import these 2 shortcuts:
     - <a href="https://www.icloud.com/shortcuts/eb9ab397923540fe9be7be878138ac4d">Wallet Transactions to JSON - Shared</a>
-    - <a href="https://www.icloud.com/shortcuts/a983e1b1d72b4a3ba0580b722d61013c">Wallet to ActualTap - Shared</a>
+    - <a href="https://www.icloud.com/shortcuts/7af42d052b664fd48473d4257b90c69f">Wallet to ActualTap - Shared</a>
 2. Open Shortcuts app
-3. Edit the <a href="https://www.icloud.com/shortcuts/a983e1b1d72b4a3ba0580b722d61013c">Wallet to ActualTap - Shared</a> shorcut
+3. Edit the <a href="https://www.icloud.com/shortcuts/7af42d052b664fd48473d4257b90c69f">Wallet to ActualTap - Shared</a> shorcut
     - Under the Dictionary block, modify the following values
        | **Key**    | **Text**                             | **Example**                             |
        | -----------| ------------------------------------ | --------------------------------------- |
