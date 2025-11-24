@@ -1,4 +1,4 @@
-actualpy==0.17.0
+actualpy==0.18.0
 fastapi[standard]==0.121.1
 pydantic
 pydantic-settings
