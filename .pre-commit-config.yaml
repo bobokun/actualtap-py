@@ -1,7 +1,7 @@
 ---
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -21,29 +21,29 @@ repos:
     hooks:
       - id: autopep8
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.37.1  # or higher tag
+    rev: v1.38.0  # or higher tag
     hooks:
       - id: yamllint
         args: [--format, parsable, --strict]
         exclude: ^(\.github/|docker-compose\.yml$)
   - repo: https://github.com/lyz-code/yamlfix
-    rev: 1.17.0
+    rev: 1.19.1
     hooks:
       - id: yamlfix
         exclude: ^(\.github/|docker-compose\.yml$)
   - repo: https://github.com/pycqa/isort
-    rev: 6.0.1
+    rev: 7.0.0
     hooks:
       - id: isort
         name: isort (python)
         args: [--force-single-line-imports, --profile, black]
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.20.0
+    rev: v3.21.2
     hooks:
       - id: pyupgrade
         args: [--py3-plus]
-  - repo: https://github.com/psf/black
-    rev: 25.1.0
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 26.1.0
     hooks:
       - id: black
         language_version: python3
