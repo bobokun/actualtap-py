@@ -42,7 +42,7 @@ class ActualService:
 
     @staticmethod
     def _is_duplicate_payee_error(error: Exception) -> bool:
-        return isinstance(error, MultipleResultsFound)
+        return isinstance(error, MultipleResultsFound) or "Multiple rows were found when one or none was required" in str(error)
 
     @staticmethod
     def _get_first_matching_payee(session, payee_name: str):
@@ -108,7 +108,7 @@ class ActualService:
                         cleared=tx.cleared,
                         imported_payee=payee,
                     )
-                except ValueError as error:
+                except Exception as error:
                     if not self._is_duplicate_payee_error(error):
                         raise
 

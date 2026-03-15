@@ -3,6 +3,8 @@ from datetime import date
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
+from sqlalchemy.orm.exc import MultipleResultsFound
+
 from core.config import settings
 from schemas.transactions import Transaction
 from services.actual_service import ActualService
@@ -120,7 +122,7 @@ class TestActualService(unittest.TestCase):
         mock_ruleset = MagicMock()
         mock_get_ruleset.return_value = mock_ruleset
 
-        duplicate_payee_error = Exception("Multiple rows were found when one or none was required")
+        duplicate_payee_error = MultipleResultsFound("Multiple rows were found when one or none was required")
         successful_transaction = MagicMock()
         mock_create_transaction.side_effect = [
             duplicate_payee_error,
