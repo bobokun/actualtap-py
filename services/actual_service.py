@@ -36,7 +36,7 @@ class ActualService:
                 cleared_flag,
             ]
         )
-        digest = hashlib.sha1(raw_key.encode("utf-8")).hexdigest()
+        digest = hashlib.sha256(raw_key.encode("utf-8")).hexdigest()
         return f"ID-{digest}"
 
     @staticmethod
