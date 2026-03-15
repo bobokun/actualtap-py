@@ -8,7 +8,6 @@ from services.actual_service import ActualService
 
 
 class TestActualService(unittest.TestCase):
-
     def setUp(self):
         self.service = ActualService()
 
@@ -24,9 +23,21 @@ class TestActualService(unittest.TestCase):
 
         transactions = [
             Transaction(
-                account="Test Account", date="2023-01-01", amount="10.00", payee="Test Payee", notes="Test Note", cleared=True
+                account="Test Account",
+                date="2023-01-01",
+                amount="10.00",
+                payee="Test Payee",
+                notes="Test Note",
+                cleared=True,
             ),
-            Transaction(account="Another Account", date="2023-01-02", amount="-20.50", payee="", notes="", cleared=False),
+            Transaction(
+                account="Another Account",
+                date="2023-01-02",
+                amount="-20.50",
+                payee="",
+                notes="",
+                cleared=False,
+            ),
         ]
 
         settings.account_mappings = {"Test Account": "actual-account-id"}
@@ -58,7 +69,12 @@ class TestActualService(unittest.TestCase):
         # Arrange
         transactions = [
             Transaction(
-                account="Unmapped Account", date="2023-01-01", amount="10.00", payee="Test Payee", notes="Test Note", cleared=True
+                account="Unmapped Account",
+                date="2023-01-01",
+                amount="10.00",
+                payee="Test Payee",
+                notes="Test Note",
+                cleared=True,
             )
         ]
         settings.account_mappings = {}
@@ -67,3 +83,60 @@ class TestActualService(unittest.TestCase):
         # Act & Assert
         with self.assertRaises(ValueError):
             self.service.add_transactions(transactions)
+
+    @patch("services.actual_service.get_ruleset")
+    @patch("services.actual_service.get_payees")
+    @patch("services.actual_service.create_transaction")
+    @patch("services.actual_service.Actual")
+    def test_add_transactions_duplicate_payee_fallback(
+        self, mock_actual, mock_create_transaction, mock_get_payees, mock_get_ruleset
+    ):
+        # Arrange
+        mock_actual_instance = MagicMock()
+        mock_actual.return_value.__enter__.return_value = mock_actual_instance
+        mock_ruleset = MagicMock()
+        mock_get_ruleset.return_value = mock_ruleset
+
+        duplicate_payee_error = Exception("Multiple rows were found when one or none was required")
+        successful_transaction = MagicMock()
+        mock_create_transaction.side_effect = [
+            duplicate_payee_error,
+            successful_transaction,
+        ]
+        fallback_payee = MagicMock()
+        mock_get_payees.return_value = [fallback_payee]
+
+        transactions = [
+            Transaction(
+                account="Test Account",
+                date="2023-01-01",
+                amount="10.00",
+                payee="Duplicate Payee",
+                notes="Test Note",
+                cleared=True,
+            )
+        ]
+
+        settings.account_mappings = {"Test Account": "actual-account-id"}
+        settings.actual_default_account_id = "default-account-id"
+        settings.actual_backup_payee = "Backup Payee"
+
+        # Act
+        result = self.service.add_transactions(transactions)
+
+        # Assert
+        self.assertEqual(len(result), 1)
+        self.assertEqual(mock_create_transaction.call_count, 2)
+
+        first_call = mock_create_transaction.call_args_list[0].kwargs
+        second_call = mock_create_transaction.call_args_list[1].kwargs
+
+        self.assertEqual(first_call["payee"], "Duplicate Payee")
+        self.assertEqual(first_call["imported_payee"], "Duplicate Payee")
+
+        self.assertEqual(second_call["payee"], fallback_payee)
+        self.assertEqual(second_call["imported_payee"], "Duplicate Payee")
+        mock_get_payees.assert_called_once_with(mock_actual_instance.session, name="Duplicate Payee")
+
+        mock_ruleset.run.assert_called_once_with([successful_transaction])
+        mock_actual_instance.commit.assert_called_once()

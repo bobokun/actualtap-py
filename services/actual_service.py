@@ -5,6 +5,7 @@ from typing import List
 
 from actual import Actual
 from actual.queries import create_transaction
+from actual.queries import get_payees
 from actual.queries import get_ruleset
 
 from core.config import settings
@@ -18,6 +19,17 @@ logger = MyLogger()
 class ActualService:
     def __init__(self):
         self.client = None
+
+    @staticmethod
+    def _is_duplicate_payee_error(error: Exception) -> bool:
+        return "Multiple rows were found when one or none was required" in str(error)
+
+    @staticmethod
+    def _get_first_matching_payee(session, payee_name: str):
+        matching_payees = get_payees(session, name=payee_name)
+        if not matching_payees:
+            return None
+        return matching_payees[0]
 
     def add_transactions(self, transactions: List[Transaction]):
         transaction_info_list = []
@@ -56,17 +68,39 @@ class ActualService:
                 transaction_info_list.append(transaction_info)
 
                 # Create transaction in Actual
-                actual_transaction = create_transaction(
-                    s=actual.session,
-                    account=account_id,
-                    amount=Decimal(tx.amount),
-                    date=date,
-                    imported_id=import_id,
-                    payee=payee,
-                    notes=tx.notes,
-                    cleared=tx.cleared,
-                    imported_payee=payee,
-                )
+                try:
+                    actual_transaction = create_transaction(
+                        s=actual.session,
+                        account=account_id,
+                        amount=Decimal(tx.amount),
+                        date=date,
+                        imported_id=import_id,
+                        payee=payee,
+                        notes=tx.notes,
+                        cleared=tx.cleared,
+                        imported_payee=payee,
+                    )
+                except Exception as error:
+                    if not self._is_duplicate_payee_error(error):
+                        raise
+
+                    fallback_payee = self._get_first_matching_payee(actual.session, payee)
+                    if fallback_payee is None:
+                        raise
+
+                    logger.warning(f"Duplicate payee match detected for '{payee}'. Falling back to first matching payee row.")
+
+                    actual_transaction = create_transaction(
+                        s=actual.session,
+                        account=account_id,
+                        amount=Decimal(tx.amount),
+                        date=date,
+                        imported_id=import_id,
+                        payee=fallback_payee,
+                        notes=tx.notes,
+                        cleared=tx.cleared,
+                        imported_payee=payee,
+                    )
                 submitted_transactions.append(actual_transaction)
 
             # Run ruleset on submitted transactions
