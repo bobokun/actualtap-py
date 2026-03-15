@@ -3,10 +3,12 @@ version: 2
 updates:
   - package-ecosystem: "pip"
     directory: "/"
+    target-branch: "main"
     schedule:
       interval: "weekly"
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "main"
     schedule:
       interval: "weekly"
     ignore:
