@@ -68,8 +68,10 @@ class TestActualService(unittest.TestCase):
         self.assertEqual(result[1]["Amount"], "-20.50")
         self.assertEqual(result[1]["Payee"], "Backup Payee")
 
-    def test_add_transactions_no_account_mapping(self):
+    @patch("services.actual_service.Actual")
+    def test_add_transactions_no_account_mapping(self, mock_actual):
         # Arrange
+        mock_actual.return_value.__enter__.return_value = MagicMock()
         transactions = [
             Transaction(
                 account="Unmapped Account",
