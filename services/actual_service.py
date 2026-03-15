@@ -1,5 +1,5 @@
+import hashlib
 import json
-import uuid
 from decimal import Decimal
 from typing import List
 
@@ -19,6 +19,25 @@ logger = MyLogger()
 class ActualService:
     def __init__(self):
         self.client = None
+
+    @staticmethod
+    def _build_import_id(account_id: str, amount: Decimal, date, payee: str, notes: str, cleared: bool) -> str:
+        normalized_amount = format(amount.normalize(), "f")
+        normalized_payee = (payee or "").strip().lower()
+        normalized_notes = (notes or "").strip().lower()
+        cleared_flag = "1" if cleared else "0"
+        raw_key = "|".join(
+            [
+                account_id,
+                normalized_amount,
+                date.isoformat(),
+                normalized_payee,
+                normalized_notes,
+                cleared_flag,
+            ]
+        )
+        digest = hashlib.sha1(raw_key.encode("utf-8")).hexdigest()
+        return f"ID-{digest}"
 
     @staticmethod
     def _is_duplicate_payee_error(error: Exception) -> bool:
@@ -47,12 +66,19 @@ class ActualService:
                 if not account_id:
                     raise ValueError(f"Account name '{tx.account}' is not mapped to an Actual Account ID.")
 
-                # Convert date and generate import ID
+                # Convert date and generate deterministic import ID
                 date = convert_to_date(tx.date)
-                import_id = f"ID-{uuid.uuid4()}"
 
                 # Determine payee
                 payee = tx.payee or settings.actual_backup_payee
+                import_id = self._build_import_id(
+                    account_id=account_id,
+                    amount=Decimal(tx.amount),
+                    date=date,
+                    payee=payee,
+                    notes=tx.notes,
+                    cleared=tx.cleared,
+                )
 
                 # Prepare transaction info for logging
                 transaction_info = {
