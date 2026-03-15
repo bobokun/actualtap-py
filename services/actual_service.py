@@ -69,12 +69,13 @@ class ActualService:
 
                 # Convert date and generate deterministic import ID
                 date = convert_to_date(tx.date)
+                amount = tx.amount
 
                 # Determine payee
                 payee = tx.payee or settings.actual_backup_payee
                 import_id = self._build_import_id(
                     account_id=account_id,
-                    amount=Decimal(tx.amount),
+                    amount=amount,
                     date=date,
                     payee=payee,
                     notes=tx.notes,
@@ -85,7 +86,7 @@ class ActualService:
                 transaction_info = {
                     "Account": tx.account,
                     "Account_ID": account_id,
-                    "Amount": str(Decimal(tx.amount)),
+                    "Amount": str(amount),
                     "Date": str(date),
                     "Imported ID": import_id,
                     "Payee": payee,
@@ -99,7 +100,7 @@ class ActualService:
                     actual_transaction = create_transaction(
                         s=actual.session,
                         account=account_id,
-                        amount=Decimal(tx.amount),
+                        amount=amount,
                         date=date,
                         imported_id=import_id,
                         payee=payee,
@@ -107,7 +108,7 @@ class ActualService:
                         cleared=tx.cleared,
                         imported_payee=payee,
                     )
-                except Exception as error:
+                except ValueError as error:
                     if not self._is_duplicate_payee_error(error):
                         raise
 
@@ -120,7 +121,7 @@ class ActualService:
                     actual_transaction = create_transaction(
                         s=actual.session,
                         account=account_id,
-                        amount=Decimal(tx.amount),
+                        amount=amount,
                         date=date,
                         imported_id=import_id,
                         payee=fallback_payee,
