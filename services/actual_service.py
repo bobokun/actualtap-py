@@ -7,6 +7,7 @@ from actual import Actual
 from actual.queries import create_transaction
 from actual.queries import get_payees
 from actual.queries import get_ruleset
+from sqlalchemy.orm.exc import MultipleResultsFound
 
 from core.config import settings
 from core.logs import MyLogger
@@ -41,7 +42,7 @@ class ActualService:
 
     @staticmethod
     def _is_duplicate_payee_error(error: Exception) -> bool:
-        return "Multiple rows were found when one or none was required" in str(error)
+        return isinstance(error, MultipleResultsFound)
 
     @staticmethod
     def _get_first_matching_payee(session, payee_name: str):
