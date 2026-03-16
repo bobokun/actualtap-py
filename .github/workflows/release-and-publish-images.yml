@@ -46,6 +46,8 @@ jobs:
               /^README\.md$/,
               /^LICENSE$/,
               /^.*\.md$/,
+              /^\.pre-commit-config\.ya?ml$/,
+              /^.*\.(ya?ml)$/,
             ]
 
             const changed = files.map(file => file.filename)
@@ -56,8 +58,19 @@ jobs:
 
             core.setOutput('should_release', releasable.length > 0 ? 'true' : 'false')
 
-  release:
+  manual-approval:
     needs: detect-release-changes
+    if: ${{ needs.detect-release-changes.outputs.should_release == 'true' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: release-approval
+
+    steps:
+      - name: Await admin approval
+        run: echo "Release approved. Continuing to publish steps."
+
+  release:
+    needs: [detect-release-changes, manual-approval]
     if: ${{ needs.detect-release-changes.outputs.should_release == 'true' }}
     runs-on: ubuntu-latest
     env:
