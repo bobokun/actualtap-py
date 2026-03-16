@@ -1,11 +1,13 @@
+import hashlib
 import json
-import uuid
 from decimal import Decimal
 from typing import List
 
 from actual import Actual
 from actual.queries import create_transaction
+from actual.queries import get_payees
 from actual.queries import get_ruleset
+from sqlalchemy.orm.exc import MultipleResultsFound
 
 from core.config import settings
 from core.logs import MyLogger
@@ -18,6 +20,38 @@ logger = MyLogger()
 class ActualService:
     def __init__(self):
         self.client = None
+
+    @staticmethod
+    def _build_import_id(account_id: str, amount: Decimal, date, payee: str, notes: str, cleared: bool) -> str:
+        normalized_amount = format(amount.normalize(), "f")
+        normalized_payee = (payee or "").strip().lower()
+        normalized_notes = (notes or "").strip().lower()
+        cleared_flag = "1" if cleared else "0"
+        raw_key = json.dumps(
+            [
+                account_id,
+                normalized_amount,
+                date.isoformat(),
+                normalized_payee,
+                normalized_notes,
+                cleared_flag,
+            ],
+            separators=(",", ":"),
+            ensure_ascii=False,
+        )
+        digest = hashlib.sha256(raw_key.encode("utf-8")).hexdigest()
+        return f"ID-{digest}"
+
+    @staticmethod
+    def _is_duplicate_payee_error(error: Exception) -> bool:
+        return isinstance(error, MultipleResultsFound) or "Multiple rows were found when one or none was required" in str(error)
+
+    @staticmethod
+    def _get_first_matching_payee(session, payee_name: str):
+        matching_payees = get_payees(session, name=payee_name)
+        if not matching_payees:
+            return None
+        return matching_payees[0]
 
     def add_transactions(self, transactions: List[Transaction]):
         transaction_info_list = []
@@ -35,18 +69,26 @@ class ActualService:
                 if not account_id:
                     raise ValueError(f"Account name '{tx.account}' is not mapped to an Actual Account ID.")
 
-                # Convert date and generate import ID
+                # Convert date and generate deterministic import ID
                 date = convert_to_date(tx.date)
-                import_id = f"ID-{uuid.uuid4()}"
+                amount = tx.amount
 
                 # Determine payee
                 payee = tx.payee or settings.actual_backup_payee
+                import_id = self._build_import_id(
+                    account_id=account_id,
+                    amount=amount,
+                    date=date,
+                    payee=payee,
+                    notes=tx.notes,
+                    cleared=tx.cleared,
+                )
 
                 # Prepare transaction info for logging
                 transaction_info = {
                     "Account": tx.account,
                     "Account_ID": account_id,
-                    "Amount": str(Decimal(tx.amount)),
+                    "Amount": str(amount),
                     "Date": str(date),
                     "Imported ID": import_id,
                     "Payee": payee,
@@ -56,17 +98,39 @@ class ActualService:
                 transaction_info_list.append(transaction_info)
 
                 # Create transaction in Actual
-                actual_transaction = create_transaction(
-                    s=actual.session,
-                    account=account_id,
-                    amount=Decimal(tx.amount),
-                    date=date,
-                    imported_id=import_id,
-                    payee=payee,
-                    notes=tx.notes,
-                    cleared=tx.cleared,
-                    imported_payee=payee,
-                )
+                try:
+                    actual_transaction = create_transaction(
+                        s=actual.session,
+                        account=account_id,
+                        amount=amount,
+                        date=date,
+                        imported_id=import_id,
+                        payee=payee,
+                        notes=tx.notes,
+                        cleared=tx.cleared,
+                        imported_payee=payee,
+                    )
+                except Exception as error:
+                    if not self._is_duplicate_payee_error(error):
+                        raise
+
+                    fallback_payee = self._get_first_matching_payee(actual.session, payee)
+                    if fallback_payee is None:
+                        raise
+
+                    logger.warning(f"Duplicate payee match detected for '{payee}'. Falling back to first matching payee row.")
+
+                    actual_transaction = create_transaction(
+                        s=actual.session,
+                        account=account_id,
+                        amount=amount,
+                        date=date,
+                        imported_id=import_id,
+                        payee=fallback_payee,
+                        notes=tx.notes,
+                        cleared=tx.cleared,
+                        imported_payee=payee,
+                    )
                 submitted_transactions.append(actual_transaction)
 
             # Run ruleset on submitted transactions
