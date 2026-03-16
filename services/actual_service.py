@@ -27,7 +27,7 @@ class ActualService:
         normalized_payee = (payee or "").strip().lower()
         normalized_notes = (notes or "").strip().lower()
         cleared_flag = "1" if cleared else "0"
-        raw_key = "|".join(
+        raw_key = json.dumps(
             [
                 account_id,
                 normalized_amount,
@@ -35,7 +35,9 @@ class ActualService:
                 normalized_payee,
                 normalized_notes,
                 cleared_flag,
-            ]
+            ],
+            separators=(",", ":"),
+            ensure_ascii=False,
         )
         digest = hashlib.sha256(raw_key.encode("utf-8")).hexdigest()
         return f"ID-{digest}"
