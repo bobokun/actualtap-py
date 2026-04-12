@@ -3,4 +3,4 @@ fastapi[standard]==0.135.3
 pydantic
 pydantic-settings
 pyyaml
-uvicorn==0.43.0
+uvicorn==0.44.0
