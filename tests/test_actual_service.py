@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from sqlalchemy.orm.exc import MultipleResultsFound
 
+from core.config import BudgetConfig
 from core.config import settings
 from schemas.transactions import Transaction
 from services.actual_service import ActualService
@@ -43,8 +44,14 @@ class TestActualService(unittest.TestCase):
             ),
         ]
 
-        settings.account_mappings = {"Test Account": "actual-account-id"}
-        settings.actual_default_account_id = "default-account-id"
+        settings.budgets = [
+            BudgetConfig(
+                name_or_sync_id="Main",
+                default=True,
+                default_account_id="default-account-id",
+                account_mappings={"Test Account": "actual-account-id"},
+            )
+        ]
         settings.actual_backup_payee = "Backup Payee"
 
         # Act
@@ -82,8 +89,7 @@ class TestActualService(unittest.TestCase):
                 cleared=True,
             )
         ]
-        settings.account_mappings = {}
-        settings.actual_default_account_id = None
+        settings.budgets = [BudgetConfig(name_or_sync_id="Main", account_mappings={})]
 
         # Act & Assert
         with self.assertRaises(ValueError):
@@ -144,8 +150,14 @@ class TestActualService(unittest.TestCase):
             )
         ]
 
-        settings.account_mappings = {"Test Account": "actual-account-id"}
-        settings.actual_default_account_id = "default-account-id"
+        settings.budgets = [
+            BudgetConfig(
+                name_or_sync_id="Main",
+                default=True,
+                default_account_id="default-account-id",
+                account_mappings={"Test Account": "actual-account-id"},
+            )
+        ]
         settings.actual_backup_payee = "Backup Payee"
 
         # Act
@@ -179,8 +191,14 @@ class TestActualService(unittest.TestCase):
         mock_ruleset = MagicMock()
         mock_get_ruleset.return_value = mock_ruleset
 
-        settings.account_mappings = {"Test Account": "actual-account-id"}
-        settings.actual_default_account_id = "default-account-id"
+        settings.budgets = [
+            BudgetConfig(
+                name_or_sync_id="Main",
+                default=True,
+                default_account_id="default-account-id",
+                account_mappings={"Test Account": "actual-account-id"},
+            )
+        ]
         settings.actual_backup_payee = "Backup Payee"
 
         tx = Transaction(
