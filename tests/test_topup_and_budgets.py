@@ -101,10 +101,13 @@ class TestResolveRoute(unittest.TestCase):
 
 class TestAddTransactionsMultiBudget(unittest.TestCase):
     @patch("services.actual_service.get_ruleset")
+    @patch.object(ActualService, "_find_existing_by_imported_id", return_value=None)
     @patch("services.actual_service.create_transaction")
     @patch("services.actual_service.Actual")
     @patch("services.actual_service.settings")
-    def test_transactions_split_across_budgets(self, mock_settings, mock_actual, mock_create_transaction, mock_get_ruleset):
+    def test_transactions_split_across_budgets(
+        self, mock_settings, mock_actual, mock_create_transaction, mock_find_existing, mock_get_ruleset
+    ):
         mock_settings.actual_url = "http://x"
         mock_settings.actual_password = "p"
         mock_settings.actual_encryption_password = None
@@ -132,10 +135,13 @@ class TestAddTransactionsMultiBudget(unittest.TestCase):
         self.assertEqual({r["Budget"] for r in result}, {"sync-1", "sync-2"})
 
     @patch("services.actual_service.get_ruleset")
+    @patch.object(ActualService, "_find_existing_by_imported_id", return_value=None)
     @patch("services.actual_service.create_transaction")
     @patch("services.actual_service.Actual")
     @patch("services.actual_service.settings")
-    def test_topup_applied_and_noted(self, mock_settings, mock_actual, mock_create_transaction, mock_get_ruleset):
+    def test_topup_applied_and_noted(
+        self, mock_settings, mock_actual, mock_create_transaction, mock_find_existing, mock_get_ruleset
+    ):
         mock_settings.actual_url = "http://x"
         mock_settings.actual_password = "p"
         mock_settings.actual_encryption_password = None

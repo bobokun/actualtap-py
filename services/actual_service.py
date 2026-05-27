@@ -7,10 +7,14 @@ from decimal import Decimal
 from typing import List
 
 from actual import Actual
+from actual.database import Transactions
 from actual.queries import create_transaction
 from actual.queries import get_payees
 from actual.queries import get_ruleset
+from sqlalchemy import func
 from sqlalchemy.orm.exc import MultipleResultsFound
+from sqlmodel import col
+from sqlmodel import select
 
 from core.config import AccountMapping
 from core.config import settings
@@ -66,10 +70,9 @@ class ActualService:
         self.client = None
 
     @staticmethod
-    def _build_import_id(account_id: str, amount: Decimal, date, payee: str, notes: str, cleared: bool) -> str:
+    def _build_import_id(account_id: str, amount: Decimal, date, payee: str, cleared: bool) -> str:
         normalized_amount = format(amount.normalize(), "f")
         normalized_payee = (payee or "").strip().lower()
-        normalized_notes = (notes or "").strip().lower()
         cleared_flag = "1" if cleared else "0"
         raw_key = json.dumps(
             [
@@ -77,7 +80,6 @@ class ActualService:
                 normalized_amount,
                 date.isoformat(),
                 normalized_payee,
-                normalized_notes,
                 cleared_flag,
             ],
             separators=(",", ":"),
@@ -96,6 +98,19 @@ class ActualService:
         if not matching_payees:
             return None
         return matching_payees[0]
+
+    @staticmethod
+    def _find_existing_by_imported_id(session, account_id: str, imported_id: str):
+        # Strict imported_id dedup, scoped to the account and excluding
+        # tombstoned rows. We deliberately avoid actualpy's reconcile fuzzy
+        # match (±7 days same amount) because identical repeated spends
+        # (e.g. same daily coffee) would otherwise collapse into one.
+        query = select(Transactions).where(
+            Transactions.acct == account_id,
+            col(Transactions.financial_id) == imported_id,
+            func.coalesce(Transactions.tombstone, 0) == 0,
+        )
+        return session.exec(query).first()
 
     @staticmethod
     def _unpack_mapping(value):
@@ -184,7 +199,6 @@ class ActualService:
                         amount=amount,
                         date=date,
                         payee=payee,
-                        notes=notes,
                         cleared=tx.cleared,
                     )
 
@@ -203,6 +217,15 @@ class ActualService:
                         "Cleared": tx.cleared,
                     }
                     transaction_info_list.append(transaction_info)
+
+                    # Idempotency: if a transaction with the same imported_id
+                    # already exists in this account, skip it. Autoflush makes
+                    # this work within the same batch too.
+                    existing = self._find_existing_by_imported_id(actual.session, account_id, import_id)
+                    if existing is not None:
+                        logger.info(f"Skipping duplicate transaction for imported_id={import_id} (existing id={existing.id})")
+                        transaction_info["Deduped"] = True
+                        continue
 
                     # Create transaction in Actual
                     try:
