@@ -14,15 +14,15 @@ class TestActualService(unittest.TestCase):
     def setUp(self):
         self.service = ActualService()
 
-    @patch("services.actual_service.get_ruleset")
+    @patch.object(ActualService, "_build_ruleset")
     @patch("services.actual_service.create_transaction")
     @patch("services.actual_service.Actual")
-    def test_add_transactions_success(self, mock_actual, mock_create_transaction, mock_get_ruleset):
+    def test_add_transactions_success(self, mock_actual, mock_create_transaction, mock_build_ruleset):
         # Arrange
         mock_actual_instance = MagicMock()
         mock_actual.return_value.__enter__.return_value = mock_actual_instance
         mock_ruleset = MagicMock()
-        mock_get_ruleset.return_value = mock_ruleset
+        mock_build_ruleset.return_value = mock_ruleset
 
         transactions = [
             Transaction(
@@ -111,18 +111,18 @@ class TestActualService(unittest.TestCase):
         self.assertEqual(import_id_one, import_id_two)
         self.assertTrue(import_id_one.startswith("ID-"))
 
-    @patch("services.actual_service.get_ruleset")
+    @patch.object(ActualService, "_build_ruleset")
     @patch("services.actual_service.get_payees")
     @patch("services.actual_service.create_transaction")
     @patch("services.actual_service.Actual")
     def test_add_transactions_duplicate_payee_fallback(
-        self, mock_actual, mock_create_transaction, mock_get_payees, mock_get_ruleset
+        self, mock_actual, mock_create_transaction, mock_get_payees, mock_build_ruleset
     ):
         # Arrange
         mock_actual_instance = MagicMock()
         mock_actual.return_value.__enter__.return_value = mock_actual_instance
         mock_ruleset = MagicMock()
-        mock_get_ruleset.return_value = mock_ruleset
+        mock_build_ruleset.return_value = mock_ruleset
 
         duplicate_payee_error = MultipleResultsFound("Multiple rows were found when one or none was required")
         successful_transaction = MagicMock()
@@ -168,16 +168,16 @@ class TestActualService(unittest.TestCase):
         mock_ruleset.run.assert_called_once_with([successful_transaction])
         mock_actual_instance.commit.assert_called_once()
 
-    @patch("services.actual_service.get_ruleset")
+    @patch.object(ActualService, "_build_ruleset")
     @patch("services.actual_service.create_transaction")
     @patch("services.actual_service.Actual")
     def test_add_transactions_uses_stable_import_id_for_replayed_transaction(
-        self, mock_actual, mock_create_transaction, mock_get_ruleset
+        self, mock_actual, mock_create_transaction, mock_build_ruleset
     ):
         mock_actual_instance = MagicMock()
         mock_actual.return_value.__enter__.return_value = mock_actual_instance
         mock_ruleset = MagicMock()
-        mock_get_ruleset.return_value = mock_ruleset
+        mock_build_ruleset.return_value = mock_ruleset
 
         settings.account_mappings = {"Test Account": "actual-account-id"}
         settings.actual_default_account_id = "default-account-id"
