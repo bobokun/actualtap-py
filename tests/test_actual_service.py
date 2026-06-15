@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from sqlalchemy.orm.exc import MultipleResultsFound
 
+from core.config import BudgetConfig
 from core.config import settings
 from schemas.transactions import Transaction
 from services.actual_service import ActualService
@@ -15,9 +16,10 @@ class TestActualService(unittest.TestCase):
         self.service = ActualService()
 
     @patch("services.actual_service.get_ruleset")
+    @patch.object(ActualService, "_find_existing_by_imported_id", return_value=None)
     @patch("services.actual_service.create_transaction")
     @patch("services.actual_service.Actual")
-    def test_add_transactions_success(self, mock_actual, mock_create_transaction, mock_get_ruleset):
+    def test_add_transactions_success(self, mock_actual, mock_create_transaction, mock_find_existing, mock_get_ruleset):
         # Arrange
         mock_actual_instance = MagicMock()
         mock_actual.return_value.__enter__.return_value = mock_actual_instance
@@ -43,8 +45,14 @@ class TestActualService(unittest.TestCase):
             ),
         ]
 
-        settings.account_mappings = {"Test Account": "actual-account-id"}
-        settings.actual_default_account_id = "default-account-id"
+        settings.budgets = [
+            BudgetConfig(
+                name_or_sync_id="Main",
+                default=True,
+                default_account_id="default-account-id",
+                account_mappings={"Test Account": "actual-account-id"},
+            )
+        ]
         settings.actual_backup_payee = "Backup Payee"
 
         # Act
@@ -82,8 +90,7 @@ class TestActualService(unittest.TestCase):
                 cleared=True,
             )
         ]
-        settings.account_mappings = {}
-        settings.actual_default_account_id = None
+        settings.budgets = [BudgetConfig(name_or_sync_id="Main", account_mappings={})]
 
         # Act & Assert
         with self.assertRaises(ValueError):
@@ -95,7 +102,6 @@ class TestActualService(unittest.TestCase):
             amount=Transaction(account="A", amount="10.00").amount,
             date=date(2023, 1, 1),
             payee=" McDONALDS #2322 ",
-            notes=" Lunch ",
             cleared=False,
         )
 
@@ -104,19 +110,32 @@ class TestActualService(unittest.TestCase):
             amount=Transaction(account="A", amount="10").amount,
             date=date(2023, 1, 1),
             payee="mcdonalds #2322",
-            notes="lunch",
             cleared=False,
         )
 
         self.assertEqual(import_id_one, import_id_two)
         self.assertTrue(import_id_one.startswith("ID-"))
 
+    def test_build_import_id_ignores_notes(self):
+        common_args = dict(
+            account_id="actual-account-id",
+            amount=Transaction(account="A", amount="10.00").amount,
+            date=date(2023, 1, 1),
+            payee="McDonalds",
+            cleared=False,
+        )
+        self.assertEqual(
+            self.service._build_import_id(**common_args),
+            self.service._build_import_id(**common_args),
+        )
+
     @patch("services.actual_service.get_ruleset")
     @patch("services.actual_service.get_payees")
+    @patch.object(ActualService, "_find_existing_by_imported_id", return_value=None)
     @patch("services.actual_service.create_transaction")
     @patch("services.actual_service.Actual")
     def test_add_transactions_duplicate_payee_fallback(
-        self, mock_actual, mock_create_transaction, mock_get_payees, mock_get_ruleset
+        self, mock_actual, mock_create_transaction, mock_find_existing, mock_get_payees, mock_get_ruleset
     ):
         # Arrange
         mock_actual_instance = MagicMock()
@@ -144,8 +163,14 @@ class TestActualService(unittest.TestCase):
             )
         ]
 
-        settings.account_mappings = {"Test Account": "actual-account-id"}
-        settings.actual_default_account_id = "default-account-id"
+        settings.budgets = [
+            BudgetConfig(
+                name_or_sync_id="Main",
+                default=True,
+                default_account_id="default-account-id",
+                account_mappings={"Test Account": "actual-account-id"},
+            )
+        ]
         settings.actual_backup_payee = "Backup Payee"
 
         # Act
@@ -169,18 +194,25 @@ class TestActualService(unittest.TestCase):
         mock_actual_instance.commit.assert_called_once()
 
     @patch("services.actual_service.get_ruleset")
+    @patch.object(ActualService, "_find_existing_by_imported_id", return_value=None)
     @patch("services.actual_service.create_transaction")
     @patch("services.actual_service.Actual")
     def test_add_transactions_uses_stable_import_id_for_replayed_transaction(
-        self, mock_actual, mock_create_transaction, mock_get_ruleset
+        self, mock_actual, mock_create_transaction, mock_find_existing, mock_get_ruleset
     ):
         mock_actual_instance = MagicMock()
         mock_actual.return_value.__enter__.return_value = mock_actual_instance
         mock_ruleset = MagicMock()
         mock_get_ruleset.return_value = mock_ruleset
 
-        settings.account_mappings = {"Test Account": "actual-account-id"}
-        settings.actual_default_account_id = "default-account-id"
+        settings.budgets = [
+            BudgetConfig(
+                name_or_sync_id="Main",
+                default=True,
+                default_account_id="default-account-id",
+                account_mappings={"Test Account": "actual-account-id"},
+            )
+        ]
         settings.actual_backup_payee = "Backup Payee"
 
         tx = Transaction(
@@ -199,3 +231,41 @@ class TestActualService(unittest.TestCase):
         first_import_id = mock_create_transaction.call_args_list[0].kwargs["imported_id"]
         second_import_id = mock_create_transaction.call_args_list[1].kwargs["imported_id"]
         self.assertEqual(first_import_id, second_import_id)
+
+    @patch("services.actual_service.get_ruleset")
+    @patch.object(ActualService, "_find_existing_by_imported_id")
+    @patch("services.actual_service.create_transaction")
+    @patch("services.actual_service.Actual")
+    def test_add_transactions_skips_when_imported_id_already_exists(
+        self, mock_actual, mock_create_transaction, mock_find_existing, mock_get_ruleset
+    ):
+        mock_actual.return_value.__enter__.return_value = MagicMock()
+        mock_get_ruleset.return_value = MagicMock()
+        # Pretend a previous POST already inserted this transaction.
+        mock_find_existing.return_value = MagicMock(id="existing-tx-id")
+
+        settings.budgets = [
+            BudgetConfig(
+                name_or_sync_id="Main",
+                default=True,
+                default_account_id="default-account-id",
+                account_mappings={"Test Account": "actual-account-id"},
+            )
+        ]
+        settings.actual_backup_payee = "Backup Payee"
+
+        result = self.service.add_transactions(
+            [
+                Transaction(
+                    account="Test Account",
+                    date="2023-01-01",
+                    amount="10.00",
+                    payee="McDonalds",
+                    cleared=True,
+                )
+            ]
+        )
+
+        mock_create_transaction.assert_not_called()
+        self.assertEqual(len(result), 1)
+        self.assertTrue(result[0]["Deduped"])

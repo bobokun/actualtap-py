@@ -23,7 +23,45 @@ Actual Tap uses FastAPI that utilises the <a href="https://github.com/bvanelli/a
 
 The primary purpose of Actual Tap is receive a POST request from mobile devices _(.e.g iOS Shortcuts)_ when a Tap to Pay transaction is made. Once the POST request is received Actual Tap will POST the Name and Amount to Actual Budget.
 
-In addition, there is a sample <a href="config/config.yml.sample">configuration file</a> that allows you to map between the Tap to Pay account and your Actual Account ID. It can be used as a template to create your own config.yml within the same directory.
+In addition, there is a sample <a href="config/config.yml.sample">configuration file</a> that maps Tap to Pay cards to your Actual accounts. It can be used as a template to create your own config.yml within the same directory.
+
+### Configuration: budgets
+
+All routing lives under a single `budgets:` list. Each budget is identified by its name or Sync ID and carries its own `account_mappings` (card name → Actual account). The card used for a payment decides which budget/Sync ID is opened, so different cards can land in different budgets automatically — useful if you keep e.g. a personal and a shared budget.
+
+Mark exactly **one** budget with `default: true`: cards not mapped in any budget go there, using its `default_account_id`.
+
+```yaml
+budgets:
+  - name_or_sync_id: "My budget"
+    default: true
+    default_account_id: "8AF657D4-4811-42C7-8272-E299A8DAC43A"
+    account_mappings:
+      "Personal Card": "b15d14ce-c0d0-40a8-95ac-45fc6681f420"
+      "Trade Republic":
+        account_id: "D4E9A36B-1C8E-4D2A-9F6B-1A2B3C4D5E6F"
+        topup: 1
+  - name_or_sync_id: "Shared budget"
+    account_mappings:
+      "Joint Card": "C3D8F25A-9C7D-4C9B-8589-8A3790C03B2D"
+```
+
+Each account value is either a plain UUID string (no top-up) or an object `{ account_id, topup }`.
+
+### Top-up accounts (Trade Republic style)
+
+Some cards (e.g. Trade Republic) are "topped up" in whole euros, so a €1.20 spend actually removes €2.00 from your balance. Enable it per account with the object form shown above.
+
+The amount recorded in Actual is rounded up to the next euro and the rounding remainder is multiplied by `topup` (whole-euro amounts add `topup` euros instead). The original amount is preserved in the transaction notes.
+
+| Amount | topup 1 | topup 2 | topup 3 |
+| ------ | ------- | ------- | ------- |
+| 1.00   | 2.00    | 3.00    | 4.00    |
+| 1.20   | 2.00    | 2.80    | 3.60    |
+| 2.30   | 3.00    | 3.70    | 4.40    |
+| 7.50   | 8.00    | 8.50    | 9.00    |
+
+`topup: 0` (or omitting it / using the plain string form) disables the feature.
 
 Ideal flow:
 
