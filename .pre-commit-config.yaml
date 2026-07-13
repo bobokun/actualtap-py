@@ -30,7 +30,7 @@ repos:
       - id: yamlfix
         exclude: ^(\.github/|docker-compose\.yml$)
   - repo: https://github.com/pycqa/isort
-    rev: 9.0.0a3
+    rev: 9.0.0b1
     hooks:
       - id: isort
         name: isort (python)
@@ -41,7 +41,7 @@ repos:
       - id: pyupgrade
         args: [--py3-plus]
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 26.3.1
+    rev: 26.5.1
     hooks:
       - id: black
         language_version: python3
