@@ -187,3 +187,52 @@ def test_add_transaction_with_zero_amount(mock_actual_service):
         assert called_with[0].amount == Decimal("0")
     finally:
         app.dependency_overrides.clear()
+
+
+def test_add_transaction_with_location(mock_actual_service):
+    """
+    Tests adding a transaction with location coordinates.
+    """
+    app.dependency_overrides[get_api_key] = override_get_api_key
+    try:
+        transaction_data = {
+            "account": "Test Account",
+            "amount": 25.50,
+            "date": "2024-01-01",
+            "payee": "Test Coffee",
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+        }
+        response = client.post("/transactions", json=transaction_data)
+        assert response.status_code == 200
+        mock_actual_service.add_transactions.assert_called_once()
+        called_with = mock_actual_service.add_transactions.call_args[0][0]
+        assert len(called_with) == 1
+        assert called_with[0].latitude == 37.7749
+        assert called_with[0].longitude == -122.4194
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_add_transaction_with_nested_location(mock_actual_service):
+    """
+    Tests adding a transaction with nested location object.
+    """
+    app.dependency_overrides[get_api_key] = override_get_api_key
+    try:
+        transaction_data = {
+            "account": "Test Account",
+            "amount": 25.50,
+            "date": "2024-01-01",
+            "payee": "Test Coffee",
+            "location": {"lat": 37.7749, "lng": -122.4194},
+        }
+        response = client.post("/transactions", json=transaction_data)
+        assert response.status_code == 200
+        mock_actual_service.add_transactions.assert_called_once()
+        called_with = mock_actual_service.add_transactions.call_args[0][0]
+        assert len(called_with) == 1
+        assert called_with[0].latitude == 37.7749
+        assert called_with[0].longitude == -122.4194
+    finally:
+        app.dependency_overrides.clear()

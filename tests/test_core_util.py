@@ -3,11 +3,28 @@ from datetime import datetime
 
 import pytest
 
+from core.util import calculate_distance
 from core.util import convert_to_date
 
 
 class TestCoreUtil:
     """Test core utility functions"""
+
+    def test_calculate_distance_same_point(self):
+        """Test calculate_distance between identical points returns 0"""
+        dist = calculate_distance(40.7128, -74.0060, 40.7128, -74.0060)
+        assert abs(dist) < 0.001
+
+    def test_calculate_distance_known_points(self):
+        """Test calculate_distance with known distance points"""
+        # Distance between London (51.5074, -0.1278) and Paris (48.8566, 2.3522) is approx 343 km
+        dist = calculate_distance(51.5074, -0.1278, 48.8566, 2.3522)
+        assert 340000 < dist < 350000
+
+    def test_calculate_distance_short_distance(self):
+        """Test calculate_distance for nearby points (~100m)"""
+        dist = calculate_distance(40.7128, -74.0060, 40.7137, -74.0060)
+        assert 90 < dist < 110
 
     def test_convert_to_date_datetime_input(self):
         """Test convert_to_date with datetime input"""

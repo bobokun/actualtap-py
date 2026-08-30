@@ -152,3 +152,76 @@ class TestTransactionSchema:
             # Since the field is typed as date, Pydantic converts datetime to date
             expected_date = date(2024, 1, 1)
             assert transaction.date == expected_date
+
+    def test_location_validation_valid_numbers(self):
+        """Test location validation with numeric latitude and longitude"""
+        transaction = Transaction(account="Test", latitude=37.7749, longitude=-122.4194)
+        assert transaction.latitude == 37.7749
+        assert transaction.longitude == -122.4194
+        assert transaction.location is not None
+        assert transaction.location.latitude == 37.7749
+        assert transaction.location.longitude == -122.4194
+
+    def test_location_validation_string_coordinates(self):
+        """Test location validation with string coordinates and comma decimals"""
+        transaction = Transaction(account="Test", latitude="37,7749", longitude="-122.4194")
+        assert transaction.latitude == 37.7749
+        assert transaction.longitude == -122.4194
+
+    def test_location_validation_aliases(self):
+        """Test location validation with alias fields lat, long, lng, lon"""
+        tx1 = Transaction(account="Test", lat=40.7128, long=-74.0060)
+        assert tx1.latitude == 40.7128
+        assert tx1.longitude == -74.0060
+
+        tx2 = Transaction(account="Test", lat=40.7128, lng=-74.0060)
+        assert tx2.latitude == 40.7128
+        assert tx2.longitude == -74.0060
+
+        tx3 = Transaction(account="Test", lat=40.7128, lon=-74.0060)
+        assert tx3.latitude == 40.7128
+        assert tx3.longitude == -74.0060
+
+    def test_location_validation_zero_longitude_aliases(self):
+        tx1 = Transaction(account="Test", lat=51.5074, long=0)
+        assert tx1.longitude == 0
+
+        tx2 = Transaction(account="Test", location={"lat": 51.5074, "lng": 0})
+        assert tx2.longitude == 0
+
+    def test_location_validation_dict_object(self):
+        """Test location validation with nested location dict"""
+        tx = Transaction(account="Test", location={"latitude": 51.5074, "longitude": -0.1278})
+        assert tx.latitude == 51.5074
+        assert tx.longitude == -0.1278
+
+        tx2 = Transaction(account="Test", location={"lat": 51.5074, "lng": -0.1278})
+        assert tx2.latitude == 51.5074
+        assert tx2.longitude == -0.1278
+
+    def test_location_validation_string_pair(self):
+        """Test location validation with comma-separated string"""
+        tx = Transaction(account="Test", location="51.5074, -0.1278")
+        assert tx.latitude == 51.5074
+        assert tx.longitude == -0.1278
+
+    def test_location_validation_missing_one_coordinate(self):
+        """Test that providing only latitude or only longitude raises ValidationError"""
+        with pytest.raises(ValidationError):
+            Transaction(account="Test", latitude=37.7749)
+
+        with pytest.raises(ValidationError):
+            Transaction(account="Test", longitude=-122.4194)
+
+    def test_location_validation_out_of_range(self):
+        """Test that out of range coordinates raise ValidationError"""
+        with pytest.raises(ValidationError):
+            Transaction(account="Test", latitude=95.0, longitude=0.0)
+
+        with pytest.raises(ValidationError):
+            Transaction(account="Test", latitude=0.0, longitude=185.0)
+
+    def test_location_validation_invalid_format(self):
+        """Test that invalid coordinate strings raise ValidationError"""
+        with pytest.raises(ValidationError):
+            Transaction(account="Test", latitude="invalid", longitude="0.0")
