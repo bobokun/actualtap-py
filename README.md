@@ -126,7 +126,7 @@ The iOS workflow has two parts: shortcuts that transform and send the transactio
 1. Import [Wallet Transactions to JSON - Shared](https://www.icloud.com/shortcuts/7913ac9944f74a9d8365280b3e88ba0f) and [Wallet to ActualTap - Shared](https://www.icloud.com/shortcuts/b94e56760b234496b02a51f80c919500).
 2. Open **Wallet to ActualTap - Shared** in Shortcuts and find its Dictionary block.
 3. Set `ActualTap URL` to the publicly reachable address of this service, including `/transactions/`, for example `https://actualtap.example.com/transactions/`.
-4. Set `API Key` to the value of `api_key` in [config/config.yml](config/config.yml).
+4. Set `API Key` to the value of `api_key` in `config/config.yml`.
 
 ### Create the Wallet Automation
 
