@@ -63,12 +63,54 @@ class TestActualService(unittest.TestCase):
         self.assertEqual(result[0]["Account_ID"], "actual-account-id")
         self.assertEqual(result[0]["Amount"], "10.00")
         self.assertEqual(result[0]["Payee"], "Test Payee")
+        self.assertEqual(result[0]["Type"], "payment")
 
         # Check second transaction (uses default account and backup payee)
         self.assertEqual(result[1]["Account"], "Another Account")
         self.assertEqual(result[1]["Account_ID"], "default-account-id")
         self.assertEqual(result[1]["Amount"], "-20.50")
         self.assertEqual(result[1]["Payee"], "Backup Payee")
+        self.assertEqual(result[1]["Type"], "payment")
+
+    @patch.object(ActualService, "_build_ruleset")
+    @patch("services.actual_service.create_transaction")
+    @patch("services.actual_service.Actual")
+    def test_add_transactions_deposit(self, mock_actual, mock_create_transaction, mock_build_ruleset):
+        # Arrange
+        mock_actual_instance = MagicMock()
+        mock_actual.return_value.__enter__.return_value = mock_actual_instance
+        mock_ruleset = MagicMock()
+        mock_build_ruleset.return_value = mock_ruleset
+
+        transactions = [
+            Transaction(
+                account="Checking Account",
+                date="2023-01-01",
+                amount="500.00",
+                type="deposit",
+                payee="Payroll",
+                notes="Paycheck",
+                cleared=True,
+            )
+        ]
+
+        settings.account_mappings = {"Checking Account": "checking-account-id"}
+        settings.actual_default_account_id = "default-account-id"
+
+        # Act
+        result = self.service.add_transactions(transactions)
+
+        # Assert
+        self.assertEqual(len(result), 1)
+        mock_actual_instance.commit.assert_called_once()
+        mock_create_transaction.assert_called_once()
+        mock_ruleset.run.assert_called_once()
+
+        self.assertEqual(result[0]["Account"], "Checking Account")
+        self.assertEqual(result[0]["Account_ID"], "checking-account-id")
+        self.assertEqual(result[0]["Amount"], "500.00")
+        self.assertEqual(result[0]["Payee"], "Payroll")
+        self.assertEqual(result[0]["Type"], "deposit")
 
     @patch("services.actual_service.Actual")
     def test_add_transactions_no_account_mapping(self, mock_actual):

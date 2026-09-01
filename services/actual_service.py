@@ -308,6 +308,7 @@ class ActualService:
                     "Payee": payee,
                     "Notes": tx.notes,
                     "Cleared": tx.cleared,
+                    "Type": tx.type,
                 }
                 if tx.latitude is not None and tx.longitude is not None:
                     transaction_info["Latitude"] = tx.latitude

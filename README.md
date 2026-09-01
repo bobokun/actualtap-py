@@ -94,6 +94,7 @@ Send one transaction, or an array of transactions, to `POST /transactions` (a tr
 | `payee` | No | Merchant or payee name. |
 | `notes` | No | Transaction notes. |
 | `cleared` | No | Whether the transaction is cleared; defaults to `false`. |
+| `type` | No | Transaction type: `payment` (expense, default) or `deposit` (income/refund). |
 | `latitude`, `longitude` | No | Payee coordinates. Supply both values together. |
 | `location` | No | Alternative coordinate pair: `{ "lat": ..., "lng": ... }`, `{ "latitude": ..., "longitude": ... }`, or a `latitude,longitude` string. |
 
@@ -112,6 +113,22 @@ curl -X POST http://localhost:8000/transactions \
         "date": "2026-08-30",
         "latitude": 37.7749,
         "longitude": -122.4194
+    }'
+```
+
+Example deposit (income / refund):
+
+```sh
+curl -X POST http://localhost:8000/transactions \
+    -H 'X-API-KEY: your-api-key' \
+    -H 'Content-Type: application/json' \
+    -d '{
+        "account": "Checking Account",
+        "amount": 2500.00,
+        "type": "deposit",
+        "payee": "Employer",
+        "date": "2026-08-30",
+        "notes": "Payroll"
     }'
 ```
 

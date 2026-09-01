@@ -20,6 +20,53 @@ class TestTransactionSchema:
         assert transaction.payee is None
         assert transaction.notes is None
         assert transaction.cleared is False
+        assert transaction.type == "payment"
+
+    def test_type_validation(self):
+        """Test type field default, valid options, case-insensitivity, whitespace, None and invalid values"""
+        # Default
+        tx_default = Transaction(account="Test Account")
+        assert tx_default.type == "payment"
+
+        # None defaults to payment
+        tx_none = Transaction(account="Test Account", type=None)
+        assert tx_none.type == "payment"
+
+        # Empty string defaults to payment
+        tx_empty = Transaction(account="Test Account", type="")
+        assert tx_empty.type == "payment"
+
+        # Whitespace string defaults to payment
+        tx_whitespace = Transaction(account="Test Account", type="   ")
+        assert tx_whitespace.type == "payment"
+
+        # Explicit payment
+        tx_payment = Transaction(account="Test Account", type="payment")
+        assert tx_payment.type == "payment"
+
+        # Explicit deposit
+        tx_deposit = Transaction(account="Test Account", type="deposit")
+        assert tx_deposit.type == "deposit"
+
+        # Case-insensitivity and trimming
+        tx_upper = Transaction(account="Test Account", type="DEPOSIT")
+        assert tx_upper.type == "deposit"
+
+        tx_trimmed = Transaction(account="Test Account", type="  deposit  ")
+        assert tx_trimmed.type == "deposit"
+
+        tx_payment_trimmed = Transaction(account="Test Account", type="  Payment  ")
+        assert tx_payment_trimmed.type == "payment"
+
+        # Invalid type string
+        with pytest.raises(ValidationError) as exc_info:
+            Transaction(account="Test Account", type="withdrawal")
+        assert "Invalid transaction type" in str(exc_info.value)
+
+        # Non-string invalid type
+        with pytest.raises(ValidationError) as exc_info:
+            Transaction(account="Test Account", type=123)
+        assert "Invalid transaction type" in str(exc_info.value)
 
     def test_transaction_valid_complete(self):
         """Test transaction with all fields"""

@@ -1,4 +1,3 @@
-from decimal import Decimal
 from typing import List
 from typing import Union
 
@@ -24,7 +23,8 @@ def add_transactions(transactions: Union[List[Transaction], Transaction]):
 
     try:
         for transaction in transactions:
-            transaction.amount *= Decimal(-1)  # Invert the amount
+            if transaction.type != "deposit" and transaction.amount != 0:
+                transaction.amount = -transaction.amount
 
         actual_service.add_transactions(transactions)
 

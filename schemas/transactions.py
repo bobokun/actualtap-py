@@ -2,6 +2,7 @@ import datetime
 from decimal import Decimal
 from typing import Any
 from typing import Dict
+from typing import Literal
 from typing import Optional
 from typing import Union
 
@@ -50,6 +51,9 @@ class Transaction(BaseModel):
     payee: Optional[str] = None
     notes: Optional[str] = None
     cleared: bool = False
+    type: Literal["payment", "deposit"] = Field(
+        default="payment", description="Transaction type: 'payment' (expense) or 'deposit' (income/refund)"
+    )
     latitude: Optional[float] = Field(default=None, ge=-90.0, le=90.0, description="Latitude between -90 and 90")
     longitude: Optional[float] = Field(default=None, ge=-180.0, le=180.0, description="Longitude between -180 and 180")
     location: Optional[Union[Location, Dict[str, Any], str]] = None
@@ -104,17 +108,35 @@ class Transaction(BaseModel):
         return data
 
     @field_validator("amount", mode="before")
-    def validate_amount(cls, v):
+    @classmethod
+    def validate_amount(cls, v: Any) -> Decimal:
         try:
+            # Treat None or whitespace-only strings as zero
+            if v is None or (isinstance(v, str) and not v.strip()):
+                return Decimal(0)
             # Replace comma with period if present
             if isinstance(v, str) and "," in v:
                 v = v.replace(",", ".")
-            return Decimal(str(v)) if v else Decimal(0)
+            return Decimal(str(v))
         except Exception:
             raise ValueError("Invalid amount format. Must be a valid decimal number.")
 
+    @field_validator("type", mode="before")
+    @classmethod
+    def validate_type(cls, v: Any) -> str:
+        if v is None:
+            return "payment"
+        if isinstance(v, str):
+            v_lower = v.strip().lower()
+            if not v_lower or v_lower == "payment":
+                return "payment"
+            if v_lower == "deposit":
+                return "deposit"
+        raise ValueError("Invalid transaction type. Must be 'payment' or 'deposit'.")
+
     @field_validator("date", mode="before")
-    def parse_date(cls, value):
+    @classmethod
+    def parse_date(cls, value: Any):
         try:
             parsed_date = convert_to_date(value)
             # If convert_to_date returns a datetime object convert it to a date object
