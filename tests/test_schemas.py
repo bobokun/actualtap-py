@@ -5,7 +5,9 @@ from decimal import Decimal
 import pytest
 from pydantic import ValidationError
 
+from schemas.transactions import Location
 from schemas.transactions import Transaction
+from schemas.transactions import _parse_coordinate
 
 
 class TestTransactionSchema:
@@ -20,6 +22,53 @@ class TestTransactionSchema:
         assert transaction.payee is None
         assert transaction.notes is None
         assert transaction.cleared is False
+        assert transaction.type == "payment"
+
+    def test_type_validation(self):
+        """Test type field default, valid options, case-insensitivity, whitespace, None and invalid values"""
+        # Default
+        tx_default = Transaction(account="Test Account")
+        assert tx_default.type == "payment"
+
+        # None defaults to payment
+        tx_none = Transaction(account="Test Account", type=None)
+        assert tx_none.type == "payment"
+
+        # Empty string defaults to payment
+        tx_empty = Transaction(account="Test Account", type="")
+        assert tx_empty.type == "payment"
+
+        # Whitespace string defaults to payment
+        tx_whitespace = Transaction(account="Test Account", type="   ")
+        assert tx_whitespace.type == "payment"
+
+        # Explicit payment
+        tx_payment = Transaction(account="Test Account", type="payment")
+        assert tx_payment.type == "payment"
+
+        # Explicit deposit
+        tx_deposit = Transaction(account="Test Account", type="deposit")
+        assert tx_deposit.type == "deposit"
+
+        # Case-insensitivity and trimming
+        tx_upper = Transaction(account="Test Account", type="DEPOSIT")
+        assert tx_upper.type == "deposit"
+
+        tx_trimmed = Transaction(account="Test Account", type="  deposit  ")
+        assert tx_trimmed.type == "deposit"
+
+        tx_payment_trimmed = Transaction(account="Test Account", type="  Payment  ")
+        assert tx_payment_trimmed.type == "payment"
+
+        # Invalid type string
+        with pytest.raises(ValidationError) as exc_info:
+            Transaction(account="Test Account", type="withdrawal")
+        assert "Invalid transaction type" in str(exc_info.value)
+
+        # Non-string invalid type
+        with pytest.raises(ValidationError) as exc_info:
+            Transaction(account="Test Account", type=123)
+        assert "Invalid transaction type" in str(exc_info.value)
 
     def test_transaction_valid_complete(self):
         """Test transaction with all fields"""
@@ -152,3 +201,166 @@ class TestTransactionSchema:
             # Since the field is typed as date, Pydantic converts datetime to date
             expected_date = date(2024, 1, 1)
             assert transaction.date == expected_date
+
+    def test_location_validation_valid_numbers(self):
+        """Test location validation with numeric latitude and longitude"""
+        transaction = Transaction(account="Test", latitude=37.7749, longitude=-122.4194)
+        assert transaction.latitude == 37.7749
+        assert transaction.longitude == -122.4194
+        assert transaction.location is not None
+        assert transaction.location.latitude == 37.7749
+        assert transaction.location.longitude == -122.4194
+
+    def test_location_validation_string_coordinates(self):
+        """Test location validation with string coordinates and comma decimals"""
+        transaction = Transaction(account="Test", latitude="37,7749", longitude="-122.4194")
+        assert transaction.latitude == 37.7749
+        assert transaction.longitude == -122.4194
+
+    def test_location_validation_aliases(self):
+        """Test location validation with alias fields lat, long, lng, lon"""
+        tx1 = Transaction(account="Test", lat=40.7128, long=-74.0060)
+        assert tx1.latitude == 40.7128
+        assert tx1.longitude == -74.0060
+
+        tx2 = Transaction(account="Test", lat=40.7128, lng=-74.0060)
+        assert tx2.latitude == 40.7128
+        assert tx2.longitude == -74.0060
+
+        tx3 = Transaction(account="Test", lat=40.7128, lon=-74.0060)
+        assert tx3.latitude == 40.7128
+        assert tx3.longitude == -74.0060
+
+    def test_location_validation_zero_longitude_aliases(self):
+        tx1 = Transaction(account="Test", lat=51.5074, long=0)
+        assert tx1.longitude == 0
+
+        tx2 = Transaction(account="Test", location={"lat": 51.5074, "lng": 0})
+        assert tx2.longitude == 0
+
+    def test_location_validation_dict_object(self):
+        """Test location validation with nested location dict"""
+        tx = Transaction(account="Test", location={"latitude": 51.5074, "longitude": -0.1278})
+        assert tx.latitude == 51.5074
+        assert tx.longitude == -0.1278
+
+        tx2 = Transaction(account="Test", location={"lat": 51.5074, "lng": -0.1278})
+        assert tx2.latitude == 51.5074
+        assert tx2.longitude == -0.1278
+
+    def test_location_validation_string_pair(self):
+        """Test location validation with comma-separated string"""
+        tx = Transaction(account="Test", location="51.5074, -0.1278")
+        assert tx.latitude == 51.5074
+        assert tx.longitude == -0.1278
+
+    def test_location_validation_missing_one_coordinate(self):
+        """Test that providing only latitude or only longitude raises ValidationError"""
+        with pytest.raises(ValidationError):
+            Transaction(account="Test", latitude=37.7749)
+
+        with pytest.raises(ValidationError):
+            Transaction(account="Test", longitude=-122.4194)
+
+    def test_location_validation_out_of_range(self):
+        """Test that out of range coordinates raise ValidationError"""
+        with pytest.raises(ValidationError):
+            Transaction(account="Test", latitude=95.0, longitude=0.0)
+
+        with pytest.raises(ValidationError):
+            Transaction(account="Test", latitude=0.0, longitude=185.0)
+
+    def test_location_validation_invalid_format(self):
+        """Test that invalid coordinate strings raise ValidationError"""
+        with pytest.raises(ValidationError):
+            Transaction(account="Test", latitude="invalid", longitude="0.0")
+
+    def test_parse_coordinate(self):
+        """Test _parse_coordinate directly with None, empty string, Decimal, and invalid non-string types"""
+        assert _parse_coordinate(None) is None
+        assert _parse_coordinate("") is None
+        assert _parse_coordinate(Decimal("45.67")) == 45.67
+        with pytest.raises(ValueError) as exc_info:
+            _parse_coordinate([45.67])
+        assert "Invalid coordinate format: [45.67]" in str(exc_info.value)
+
+    def test_location_validation_location_instance(self):
+        """Test location validation with Location model instance"""
+        loc = Location(latitude=37.7749, longitude=-122.4194)
+        tx = Transaction(account="Test", location=loc)
+        assert tx.latitude == 37.7749
+        assert tx.longitude == -122.4194
+
+    def test_location_validation_location_instance_partial_overrides(self):
+        """Test location validation with Location model instance when lat or lon is already set"""
+        loc = Location(latitude=37.7749, longitude=-122.4194)
+        # lat already provided
+        tx1 = Transaction(account="Test", latitude=40.7128, location=loc)
+        assert tx1.latitude == 40.7128
+        assert tx1.longitude == -122.4194
+
+        # lon already provided
+        tx2 = Transaction(account="Test", longitude=-74.0060, location=loc)
+        assert tx2.latitude == 37.7749
+        assert tx2.longitude == -74.0060
+
+    def test_location_validation_unsupported_coordinate_type(self):
+        """Test location validation with unsupported coordinate types raises ValidationError"""
+        with pytest.raises(ValidationError) as exc_info:
+            Transaction(account="Test", latitude=[37.7749], longitude=-122.4194)
+        assert "Invalid coordinate format" in str(exc_info.value)
+
+    def test_normalize_location_non_dict(self):
+        """Test normalize_location returns input unchanged when data is not a dict"""
+        with pytest.raises(ValidationError):
+            Transaction.model_validate("non-dict-value")
+
+    def test_location_validation_exact_boundaries(self):
+        """Test location validation with exact boundary coordinates"""
+        tx_max = Transaction(account="Test", latitude=90.0, longitude=180.0)
+        assert tx_max.latitude == 90.0
+        assert tx_max.longitude == 180.0
+
+        tx_min = Transaction(account="Test", latitude=-90.0, longitude=-180.0)
+        assert tx_min.latitude == -90.0
+        assert tx_min.longitude == -180.0
+
+    def test_location_validation_string_without_comma(self):
+        """Test location string without comma is preserved without setting coordinates"""
+        tx = Transaction(account="Test", location="Downtown Store")
+        assert tx.location == "Downtown Store"
+        assert tx.latitude is None
+        assert tx.longitude is None
+
+    def test_location_validation_string_with_more_than_two_parts(self):
+        """Test location string with more than two comma-separated parts is preserved without coordinates"""
+        tx = Transaction(account="Test", location="10.0, 20.0, 30.0")
+        assert tx.location == "10.0, 20.0, 30.0"
+        assert tx.latitude is None
+        assert tx.longitude is None
+
+    def test_location_validation_string_out_of_range(self):
+        """Test location string with out of range coordinates raises ValidationError"""
+        with pytest.raises(ValidationError):
+            Transaction(account="Test", location="95.0, 0.0")
+
+        with pytest.raises(ValidationError):
+            Transaction(account="Test", location="0.0, 190.0")
+
+    def test_location_validation_dict_partial_override(self):
+        """Test location dict when one coordinate is provided at top level"""
+        tx1 = Transaction(account="Test", latitude=40.0, location={"longitude": -74.0})
+        assert tx1.latitude == 40.0
+        assert tx1.longitude == -74.0
+
+        tx2 = Transaction(account="Test", longitude=-74.0, location={"latitude": 40.0})
+        assert tx2.latitude == 40.0
+        assert tx2.longitude == -74.0
+
+    def test_date_field_uses_default_factory(self):
+        """Test that the date field uses default_factory to set today's date dynamically"""
+        date_field = Transaction.model_fields["date"]
+        assert date_field.default_factory == date.today
+        assert Transaction(account="Test").date == date.today()
+        explicit = date(2023, 5, 20)
+        assert Transaction(account="Test", date=explicit).date == explicit

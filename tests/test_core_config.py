@@ -5,6 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from core.config import load_config
+from core.config import redact_sensitive_settings
 
 
 class TestCoreConfig:
@@ -35,3 +36,9 @@ class TestCoreConfig:
             import core.config  # noqa: F401
 
         assert "Configuration file not found" in str(exc_info.value)
+
+    def test_redact_sensitive_settings(self):
+        """Test redact_sensitive_settings redacts specified keys and ignores non-existent keys"""
+        redacted = redact_sensitive_settings(["actual_password", "non_existent_key"])
+        assert redacted["actual_password"] == "REDACTED"
+        assert "non_existent_key" not in redacted
