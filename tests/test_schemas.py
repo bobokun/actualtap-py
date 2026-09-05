@@ -5,7 +5,9 @@ from decimal import Decimal
 import pytest
 from pydantic import ValidationError
 
+from schemas.transactions import Location
 from schemas.transactions import Transaction
+from schemas.transactions import _parse_coordinate
 
 
 class TestTransactionSchema:
@@ -272,3 +274,43 @@ class TestTransactionSchema:
         """Test that invalid coordinate strings raise ValidationError"""
         with pytest.raises(ValidationError):
             Transaction(account="Test", latitude="invalid", longitude="0.0")
+
+    def test_parse_coordinate(self):
+        """Test _parse_coordinate directly with None, empty string, Decimal, and invalid non-string types"""
+        assert _parse_coordinate(None) is None
+        assert _parse_coordinate("") is None
+        assert _parse_coordinate(Decimal("45.67")) == 45.67
+        with pytest.raises(ValueError) as exc_info:
+            _parse_coordinate([45.67])
+        assert "Invalid coordinate format: [45.67]" in str(exc_info.value)
+
+    def test_location_validation_location_instance(self):
+        """Test location validation with Location model instance"""
+        loc = Location(latitude=37.7749, longitude=-122.4194)
+        tx = Transaction(account="Test", location=loc)
+        assert tx.latitude == 37.7749
+        assert tx.longitude == -122.4194
+
+    def test_location_validation_location_instance_partial_overrides(self):
+        """Test location validation with Location model instance when lat or lon is already set"""
+        loc = Location(latitude=37.7749, longitude=-122.4194)
+        # lat already provided
+        tx1 = Transaction(account="Test", latitude=40.7128, location=loc)
+        assert tx1.latitude == 40.7128
+        assert tx1.longitude == -122.4194
+
+        # lon already provided
+        tx2 = Transaction(account="Test", longitude=-74.0060, location=loc)
+        assert tx2.latitude == 37.7749
+        assert tx2.longitude == -74.0060
+
+    def test_location_validation_unsupported_coordinate_type(self):
+        """Test location validation with unsupported coordinate types raises ValidationError"""
+        with pytest.raises(ValidationError) as exc_info:
+            Transaction(account="Test", latitude=[37.7749], longitude=-122.4194)
+        assert "Invalid coordinate format" in str(exc_info.value)
+
+    def test_normalize_location_non_dict(self):
+        """Test normalize_location returns input unchanged when data is not a dict"""
+        with pytest.raises(ValidationError):
+            Transaction.model_validate("non-dict-value")

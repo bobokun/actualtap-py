@@ -1,3 +1,4 @@
+import json
 import unittest
 from datetime import date
 from unittest.mock import MagicMock
@@ -454,3 +455,119 @@ class TestActualService(unittest.TestCase):
         added_objects = [call[0][0] for call in mock_actual_instance.session.add.call_args_list]
         payee_loc_objects = [obj for obj in added_objects if isinstance(obj, PayeeLocations)]
         self.assertEqual(len(payee_loc_objects), 0)
+
+    @patch.object(ActualService, "_build_ruleset")
+    @patch("services.actual_service.create_transaction")
+    @patch("services.actual_service.Actual")
+    def test_add_transactions_non_duplicate_error_raises(self, mock_actual, mock_create_transaction, mock_build_ruleset):
+        mock_actual_instance = MagicMock()
+        mock_actual.return_value.__enter__.return_value = mock_actual_instance
+        mock_create_transaction.side_effect = RuntimeError("Fatal DB connection lost")
+
+        settings.account_mappings = {"Test Account": "actual-account-id"}
+        tx = Transaction(account="Test Account", payee="Coffee Shop")
+
+        with self.assertRaises(RuntimeError):
+            self.service.add_transactions([tx])
+
+    @patch.object(ActualService, "_get_first_matching_payee")
+    @patch.object(ActualService, "_build_ruleset")
+    @patch("services.actual_service.create_transaction")
+    @patch("services.actual_service.Actual")
+    def test_add_transactions_duplicate_payee_not_found_raises(
+        self, mock_actual, mock_create_transaction, mock_build_ruleset, mock_get_first_payee
+    ):
+        mock_actual_instance = MagicMock()
+        mock_actual.return_value.__enter__.return_value = mock_actual_instance
+        mock_create_transaction.side_effect = MultipleResultsFound("Multiple rows were found")
+        mock_get_first_payee.return_value = None
+
+        settings.account_mappings = {"Test Account": "actual-account-id"}
+        tx = Transaction(account="Test Account", payee="Coffee Shop")
+
+        with self.assertRaises(MultipleResultsFound):
+            self.service.add_transactions([tx])
+
+    @patch("services.actual_service.get_payees")
+    def test_get_first_matching_payee_none(self, mock_get_payees):
+        mock_get_payees.return_value = []
+        result = ActualService._get_first_matching_payee(MagicMock(), "Nonexistent Payee")
+        self.assertIsNone(result)
+
+    def test_resolve_payee_id_from_payee_object(self):
+        actual_tx = MagicMock(spec=["payee"])
+        actual_tx.payee = MagicMock(id="payee-obj-id")
+        tx = Transaction(account="Test Account", payee="Coffee Shop")
+        payee_id = ActualService._resolve_payee_id(MagicMock(), tx, actual_tx)
+        self.assertEqual(payee_id, "payee-obj-id")
+
+    @patch.object(ActualService, "_get_first_matching_payee")
+    def test_resolve_payee_id_fallback_matched(self, mock_get_first_payee):
+        actual_tx = MagicMock(spec=[])
+        tx = Transaction(account="Test Account", payee="Coffee Shop")
+        mock_get_first_payee.return_value = MagicMock(id="matched-payee-id")
+        payee_id = ActualService._resolve_payee_id(MagicMock(), tx, actual_tx)
+        self.assertEqual(payee_id, "matched-payee-id")
+
+    @patch.object(ActualService, "_get_first_matching_payee")
+    def test_resolve_payee_id_fallback_not_found(self, mock_get_first_payee):
+        actual_tx = MagicMock(spec=[])
+        tx = Transaction(account="Test Account", payee=None)
+        settings.actual_backup_payee = "Backup Payee"
+        mock_get_first_payee.return_value = None
+        payee_id = ActualService._resolve_payee_id(MagicMock(), tx, actual_tx)
+        self.assertIsNone(payee_id)
+        mock_get_first_payee.assert_called_once_with(unittest.mock.ANY, "Backup Payee")
+
+    def test_get_payee_locations_db_error(self):
+        mock_session = MagicMock()
+        mock_session.exec.side_effect = SQLAlchemyError("Query failed")
+        result = ActualService.get_payee_locations(mock_session, payee_id="payee-123")
+        self.assertEqual(result, [])
+
+    def test_create_payee_location_db_error(self):
+        mock_session = MagicMock()
+        mock_session.exec.return_value.all.return_value = []
+        mock_session.add.side_effect = SQLAlchemyError("Insert failed")
+        result = ActualService.create_payee_location(mock_session, "payee-123", 40.7128, -74.0060)
+        self.assertIsNone(result)
+
+    def test_build_ruleset_skips_invalid_and_builds_valid(self):
+        mock_session = MagicMock()
+        rule_empty = MagicMock(conditions=None, actions=None)
+        rule_valid = MagicMock(
+            id="rule-1",
+            conditions=json.dumps([{"field": "imported_description", "op": "is", "value": "Coffee", "type": "string"}]),
+            actions=json.dumps([{"field": "notes", "op": "set", "value": "My note", "type": "string"}]),
+            conditions_op="all",
+            stage="pre",
+        )
+        rule_unsupported_field = MagicMock(
+            id="rule-2",
+            conditions=json.dumps([{"field": "imported_description", "op": "is", "value": "Tea", "type": "string"}]),
+            actions=json.dumps([{"field": "custom_unsupported_field", "op": "set", "value": "xyz"}]),
+            conditions_op="all",
+            stage="pre",
+        )
+        rule_bad_json = MagicMock(
+            id="rule-3",
+            conditions="bad json",
+            actions="{not json",
+            conditions_op="all",
+            stage="pre",
+        )
+        rule_validation_error = MagicMock(
+            id="rule-4",
+            conditions=json.dumps([{"field": "imported_description", "op": "is", "value": "Milk", "type": "string"}]),
+            actions=json.dumps([{"field": "notes", "op": "invalid_operation", "value": "xyz"}]),
+            conditions_op="all",
+            stage="pre",
+        )
+
+        with patch(
+            "services.actual_service.get_rules",
+            return_value=[rule_empty, rule_valid, rule_unsupported_field, rule_bad_json, rule_validation_error],
+        ):
+            ruleset = ActualService._build_ruleset(mock_session)
+            self.assertEqual(len(ruleset.rules), 1)
+            self.assertEqual(ruleset.rules[0].stage, "pre")

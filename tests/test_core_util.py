@@ -135,3 +135,16 @@ class TestCoreUtil:
 
         result3 = convert_to_date("JAN 15, 2024")  # uppercase month
         assert result3 == date(2024, 1, 15)
+
+    def test_convert_to_date_date_input(self):
+        """Test convert_to_date with date input returns date unchanged"""
+        test_date = date(2024, 1, 15)
+        result = convert_to_date(test_date)
+        assert isinstance(result, date)
+        assert result == test_date
+
+    def test_convert_to_date_unsupported_type(self):
+        """Test convert_to_date with unsupported type raises TypeError"""
+        with pytest.raises(TypeError) as exc_info:
+            convert_to_date(12345)
+        assert "Expected str, datetime, or date, got int" in str(exc_info.value)
