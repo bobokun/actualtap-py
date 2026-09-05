@@ -186,10 +186,7 @@ class ActualService:
                 and calculate_distance(latitude, longitude, float(location.latitude), float(location.longitude)) <= max_distance
                 for location in locations
             ):
-                logger.info(
-                    f"Payee location for payee ID '{payee_id}' ({latitude}, {longitude}) "
-                    f"already exists within {max_distance}m. Skipping."
-                )
+                logger.info(f"Payee location for payee ID '{payee_id}' already exists within " f"{max_distance}m. Skipping.")
                 return None
 
             payee_loc = PayeeLocations(
@@ -201,7 +198,7 @@ class ActualService:
                 tombstone=0,
             )
             session.add(payee_loc)
-            logger.info(f"Saved new payee location for payee ID '{payee_id}' ({latitude}, {longitude})")
+            logger.info(f"Saved new payee location for payee ID '{payee_id}'")
             return payee_loc
         except SQLAlchemyError as e:
             logger.warning(f"Failed to create payee location for payee ID '{payee_id}': {e}")
