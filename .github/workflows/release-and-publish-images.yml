@@ -5,6 +5,16 @@ on:
     branches: [main]
     types: [closed]
   workflow_dispatch:
+    inputs:
+      version_bump:
+        description: Version component to increment
+        required: true
+        default: patch
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
 
 concurrency:
   group: release-main
@@ -16,6 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       should_release: ${{ steps.changes.outputs.should_release }}
+      version_bump: ${{ steps.changes.outputs.version_bump }}
 
     steps:
       - name: Detect release-relevant file changes
@@ -52,11 +63,19 @@ jobs:
 
             const changed = files.map(file => file.filename)
             const releasable = changed.filter(file => !ignored.some(rule => rule.test(file)))
+            const labels = context.payload.pull_request.labels.map(label => label.name)
+            const bumpLabels = labels.filter(label => /^release:(major|minor)$/.test(label))
+
+            if (bumpLabels.length > 1) {
+              core.setFailed(`Multiple release bump labels found: ${bumpLabels.join(', ')}`)
+              return
+            }
 
             core.info(`Changed files: ${changed.length}`)
             core.info(`Release-relevant files: ${releasable.length}`)
 
             core.setOutput('should_release', releasable.length > 0 ? 'true' : 'false')
+            core.setOutput('version_bump', bumpLabels[0]?.replace('release:', '') || 'patch')
 
   manual-approval:
     needs: detect-release-changes
@@ -95,7 +114,24 @@ jobs:
           fi
 
           IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
-          NEXT_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+          BUMP_TYPE="${{ inputs.version_bump || needs.detect-release-changes.outputs.version_bump || 'patch' }}"
+
+          case "$BUMP_TYPE" in
+            major)
+              NEXT_VERSION="$((MAJOR + 1)).0.0"
+              ;;
+            minor)
+              NEXT_VERSION="$MAJOR.$((MINOR + 1)).0"
+              ;;
+            patch)
+              NEXT_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+              ;;
+            *)
+              echo "Unsupported version bump: $BUMP_TYPE"
+              exit 1
+              ;;
+          esac
+
           NEXT_TAG="v$NEXT_VERSION"
 
           echo "$NEXT_VERSION" > VERSION
