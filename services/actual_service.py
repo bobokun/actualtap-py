@@ -179,8 +179,13 @@ class ActualService:
     ) -> typing.Optional[PayeeLocations]:
         """Create a payee location if one does not already exist within max_distance (mirrors api/payee-location-create)."""
         try:
-            nearby = cls.get_nearby_payees(session, latitude, longitude, max_distance=max_distance)
-            if any(item["payee_id"] == payee_id for item in nearby):
+            locations = cls.get_payee_locations(session, payee_id=payee_id)
+            if any(
+                location.latitude is not None
+                and location.longitude is not None
+                and calculate_distance(latitude, longitude, float(location.latitude), float(location.longitude)) <= max_distance
+                for location in locations
+            ):
                 logger.info(
                     f"Payee location for payee ID '{payee_id}' ({latitude}, {longitude}) "
                     f"already exists within {max_distance}m. Skipping."

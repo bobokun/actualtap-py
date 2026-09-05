@@ -114,7 +114,7 @@ jobs:
           fi
 
           IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
-          BUMP_TYPE="${{ inputs.version_bump || needs.detect-release-changes.outputs.version_bump || 'patch' }}"
+            BUMP_TYPE="${{ github.event.inputs.version_bump || needs.detect-release-changes.outputs.version_bump || 'patch' }}"
 
           case "$BUMP_TYPE" in
             major)
