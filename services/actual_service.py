@@ -215,11 +215,14 @@ class ActualService:
         aborting the entire import.
         """
         _field_annotation = Action.model_fields["field"].annotation
-        valid_action_fields = {
-            v
-            for arg in typing.get_args(_field_annotation)
-            for v in (typing.get_args(arg) if typing.get_origin(arg) is typing.Literal else ())
-        }
+        if typing.get_origin(_field_annotation) is typing.Literal:
+            valid_action_fields = set(typing.get_args(_field_annotation))
+        else:
+            valid_action_fields = {
+                v
+                for arg in typing.get_args(_field_annotation)
+                for v in (typing.get_args(arg) if typing.get_origin(arg) is typing.Literal else ())
+            }
         condition_adapter = TypeAdapter(list[Condition])
         action_adapter = TypeAdapter(list[Action])
         valid_rules = []

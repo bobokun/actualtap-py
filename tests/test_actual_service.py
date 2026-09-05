@@ -1,9 +1,11 @@
 import json
+import typing
 import unittest
 from datetime import date
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
+from actual.rules import Action
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import MultipleResultsFound
 
@@ -572,6 +574,39 @@ class TestActualService(unittest.TestCase):
             ruleset = ActualService._build_ruleset(mock_session)
             self.assertEqual(len(ruleset.rules), 1)
             self.assertEqual(ruleset.rules[0].stage, "pre")
+
+    def test_build_ruleset_with_direct_literal_field_annotation(self):
+        """Test _build_ruleset extracts valid fields correctly when Action.field annotation is a direct Literal."""
+        mock_session = MagicMock()
+        mock_field_info = MagicMock()
+        mock_field_info.annotation = typing.Literal["notes", "category"]
+
+        rule_valid = MagicMock(
+            id="rule-1",
+            conditions=json.dumps([{"field": "imported_description", "op": "is", "value": "Coffee", "type": "string"}]),
+            actions=json.dumps([{"field": "notes", "op": "set", "value": "My note", "type": "string"}]),
+            conditions_op="all",
+            stage="pre",
+        )
+        rule_unsupported_field = MagicMock(
+            id="rule-2",
+            conditions=json.dumps([{"field": "imported_description", "op": "is", "value": "Tea", "type": "string"}]),
+            actions=json.dumps([{"field": "custom_unsupported_field", "op": "set", "value": "xyz"}]),
+            conditions_op="all",
+            stage="pre",
+        )
+
+        with patch.dict(Action.model_fields, {"field": mock_field_info}):
+            with patch("services.actual_service.get_rules", return_value=[rule_valid, rule_unsupported_field]):
+                with patch("services.actual_service.logger") as mock_logger:
+                    ruleset = ActualService._build_ruleset(mock_session)
+                    self.assertEqual(len(ruleset.rules), 1)
+                    self.assertEqual(ruleset.rules[0].stage, "pre")
+                    mock_logger.warning.assert_called_once()
+                    self.assertIn(
+                        "unsupported action field(s): ['custom_unsupported_field']",
+                        mock_logger.warning.call_args[0][0],
+                    )
 
     def test_register_payee_locations_mapping_idempotent(self):
         """Test _register_payee_locations_mapping does not error when already registered"""

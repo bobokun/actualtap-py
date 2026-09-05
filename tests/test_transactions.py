@@ -132,6 +132,55 @@ def test_add_mixed_payment_and_deposit_success(mock_actual_service):
     assert called_with[1].type == "deposit"
 
 
+def test_add_negative_and_zero_amount_normalization(mock_actual_service):
+    """Tests that negative payments remain negative, negative deposits become positive, and zeros are untouched."""
+    transactions_data = [
+        {
+            "account": "Test Account",
+            "amount": -50.0,
+            "type": "payment",
+            "payee": "Coffee Shop",
+        },
+        {
+            "account": "Test Account",
+            "amount": -25.0,
+            "type": "deposit",
+            "payee": "Refund Store",
+        },
+        {
+            "account": "Test Account",
+            "amount": 0.0,
+            "type": "payment",
+            "payee": "Free Item",
+        },
+        {
+            "account": "Test Account",
+            "amount": 0.0,
+            "type": "deposit",
+            "payee": "Zero Adjustment",
+        },
+    ]
+    response = client.post("/transactions", json=transactions_data)
+    assert response.status_code == 200
+    assert response.json() == {"message": "Transactions added successfully"}
+
+    mock_actual_service.add_transactions.assert_called_once()
+    called_with = mock_actual_service.add_transactions.call_args[0][0]
+    assert len(called_with) == 4
+    # Already-negative payment stays negative
+    assert called_with[0].amount == Decimal("-50.0")
+    assert called_with[0].type == "payment"
+    # Negative deposit is normalized to positive
+    assert called_with[1].amount == Decimal("25.0")
+    assert called_with[1].type == "deposit"
+    # Zero payment remains zero
+    assert called_with[2].amount == Decimal("0.0")
+    assert called_with[2].type == "payment"
+    # Zero deposit remains zero
+    assert called_with[3].amount == Decimal("0.0")
+    assert called_with[3].type == "deposit"
+
+
 def test_add_transactions_empty_body(mock_actual_service):
     """Tests that a 422 error is returned when no body is provided."""
     response = client.post("/transactions", json=None)

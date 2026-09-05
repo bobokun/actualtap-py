@@ -23,8 +23,10 @@ def add_transactions(transactions: Union[List[Transaction], Transaction]):
 
     try:
         for transaction in transactions:
-            if transaction.type != "deposit" and transaction.amount != 0:
-                transaction.amount = -transaction.amount
+            if transaction.type == "deposit":
+                transaction.amount = abs(transaction.amount)
+            elif transaction.amount != 0:
+                transaction.amount = -abs(transaction.amount)
 
         actual_service.add_transactions(transactions)
 
