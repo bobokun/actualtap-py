@@ -314,3 +314,53 @@ class TestTransactionSchema:
         """Test normalize_location returns input unchanged when data is not a dict"""
         with pytest.raises(ValidationError):
             Transaction.model_validate("non-dict-value")
+
+    def test_location_validation_exact_boundaries(self):
+        """Test location validation with exact boundary coordinates"""
+        tx_max = Transaction(account="Test", latitude=90.0, longitude=180.0)
+        assert tx_max.latitude == 90.0
+        assert tx_max.longitude == 180.0
+
+        tx_min = Transaction(account="Test", latitude=-90.0, longitude=-180.0)
+        assert tx_min.latitude == -90.0
+        assert tx_min.longitude == -180.0
+
+    def test_location_validation_string_without_comma(self):
+        """Test location string without comma is preserved without setting coordinates"""
+        tx = Transaction(account="Test", location="Downtown Store")
+        assert tx.location == "Downtown Store"
+        assert tx.latitude is None
+        assert tx.longitude is None
+
+    def test_location_validation_string_with_more_than_two_parts(self):
+        """Test location string with more than two comma-separated parts is preserved without coordinates"""
+        tx = Transaction(account="Test", location="10.0, 20.0, 30.0")
+        assert tx.location == "10.0, 20.0, 30.0"
+        assert tx.latitude is None
+        assert tx.longitude is None
+
+    def test_location_validation_string_out_of_range(self):
+        """Test location string with out of range coordinates raises ValidationError"""
+        with pytest.raises(ValidationError):
+            Transaction(account="Test", location="95.0, 0.0")
+
+        with pytest.raises(ValidationError):
+            Transaction(account="Test", location="0.0, 190.0")
+
+    def test_location_validation_dict_partial_override(self):
+        """Test location dict when one coordinate is provided at top level"""
+        tx1 = Transaction(account="Test", latitude=40.0, location={"longitude": -74.0})
+        assert tx1.latitude == 40.0
+        assert tx1.longitude == -74.0
+
+        tx2 = Transaction(account="Test", longitude=-74.0, location={"latitude": 40.0})
+        assert tx2.latitude == 40.0
+        assert tx2.longitude == -74.0
+
+    def test_date_field_uses_default_factory(self):
+        """Test that the date field uses default_factory to set today's date dynamically"""
+        date_field = Transaction.model_fields["date"]
+        assert date_field.default_factory == date.today
+        assert Transaction(account="Test").date == date.today()
+        explicit = date(2023, 5, 20)
+        assert Transaction(account="Test", date=explicit).date == explicit

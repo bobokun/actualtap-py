@@ -11,6 +11,7 @@ from core.config import settings
 from schemas.transactions import Transaction
 from services.actual_service import ActualService
 from services.actual_service import PayeeLocations
+from services.actual_service import _register_payee_locations_mapping
 
 
 class TestActualService(unittest.TestCase):
@@ -571,3 +572,88 @@ class TestActualService(unittest.TestCase):
             ruleset = ActualService._build_ruleset(mock_session)
             self.assertEqual(len(ruleset.rules), 1)
             self.assertEqual(ruleset.rules[0].stage, "pre")
+
+    def test_register_payee_locations_mapping_idempotent(self):
+        """Test _register_payee_locations_mapping does not error when already registered"""
+        _register_payee_locations_mapping()
+
+    def test_get_nearby_payees_skips_none_coordinates_or_payee(self):
+        """Test get_nearby_payees safely skips records missing latitude, longitude, or payee_id"""
+        mock_session = MagicMock()
+        loc_valid = PayeeLocations(id="loc-1", payee_id="payee-1", latitude=40.7128, longitude=-74.0060)
+        loc_no_lat = PayeeLocations(id="loc-2", payee_id="payee-2", latitude=None, longitude=-74.0060)
+        loc_no_lon = PayeeLocations(id="loc-3", payee_id="payee-3", latitude=40.7128, longitude=None)
+        loc_no_payee = PayeeLocations(id="loc-4", payee_id=None, latitude=40.7128, longitude=-74.0060)
+        mock_exec_result = MagicMock()
+        mock_exec_result.all.return_value = [loc_valid, loc_no_lat, loc_no_lon, loc_no_payee]
+        mock_session.exec.return_value = mock_exec_result
+
+        nearby = ActualService.get_nearby_payees(mock_session, 40.7128, -74.0060, max_distance=100.0)
+        self.assertEqual(len(nearby), 1)
+        self.assertEqual(nearby[0]["payee_id"], "payee-1")
+
+    def test_create_payee_location_handles_existing_none_coordinates(self):
+        """Test create_payee_location handles existing DB records with None coordinates safely"""
+        mock_session = MagicMock()
+        loc_none = PayeeLocations(id="loc-none", payee_id="payee-1", latitude=None, longitude=None)
+        mock_exec_result = MagicMock()
+        mock_exec_result.all.return_value = [loc_none]
+        mock_session.exec.return_value = mock_exec_result
+
+        result = ActualService.create_payee_location(mock_session, "payee-1", 40.7128, -74.0060)
+        self.assertIsNotNone(result)
+        self.assertEqual(result.payee_id, "payee-1")
+
+    @patch.object(ActualService, "create_payee_location")
+    @patch.object(ActualService, "supports_payee_locations", return_value=True)
+    @patch.object(ActualService, "_build_ruleset")
+    @patch("services.actual_service.create_transaction")
+    @patch("services.actual_service.Actual")
+    def test_add_transactions_with_location_skips_when_payee_unresolved(
+        self, mock_actual, mock_create_transaction, mock_build_ruleset, mock_supports_loc, mock_create_loc
+    ):
+        """Test add_transactions skips create_payee_location if payee_id could not be resolved"""
+        mock_actual_instance = MagicMock()
+        mock_actual.return_value.__enter__.return_value = mock_actual_instance
+        mock_tx = MagicMock(spec=[])  # no payee_id, no payee
+        mock_create_transaction.return_value = mock_tx
+        mock_build_ruleset.return_value = MagicMock()
+
+        settings.account_mappings = {"Test Account": "actual-account-id"}
+        settings.actual_backup_payee = "Backup Payee"
+
+        with patch.object(ActualService, "_get_first_matching_payee", return_value=None):
+            tx = Transaction(account="Test Account", latitude=40.7128, longitude=-74.0060)
+            result = self.service.add_transactions([tx])
+            self.assertEqual(len(result), 1)
+            mock_create_loc.assert_not_called()
+
+    @patch.object(ActualService, "create_payee_location")
+    @patch.object(ActualService, "supports_payee_locations", return_value=True)
+    @patch.object(ActualService, "_build_ruleset")
+    @patch("services.actual_service.create_transaction")
+    @patch("services.actual_service.Actual")
+    def test_add_transactions_mixed_coordinates_batch(
+        self, mock_actual, mock_create_transaction, mock_build_ruleset, mock_supports_loc, mock_create_loc
+    ):
+        """Test add_transactions only creates payee locations for transactions that have coordinates"""
+        mock_actual_instance = MagicMock()
+        mock_actual.return_value.__enter__.return_value = mock_actual_instance
+        mock_tx1 = MagicMock(payee_id="payee-1")
+        mock_tx2 = MagicMock(payee_id="payee-2")
+        mock_create_transaction.side_effect = [mock_tx1, mock_tx2]
+        mock_build_ruleset.return_value = MagicMock()
+
+        settings.account_mappings = {"Test Account": "actual-account-id"}
+
+        tx1 = Transaction(account="Test Account", payee="Store 1", latitude=40.7128, longitude=-74.0060)
+        tx2 = Transaction(account="Test Account", payee="Store 2")  # no location
+
+        result = self.service.add_transactions([tx1, tx2])
+        self.assertEqual(len(result), 2)
+        mock_create_loc.assert_called_once_with(
+            session=mock_actual_instance.session,
+            payee_id="payee-1",
+            latitude=40.7128,
+            longitude=-74.0060,
+        )
