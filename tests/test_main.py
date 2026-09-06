@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+import pytest
 from fastapi.testclient import TestClient
 
 from core.security import get_api_key
@@ -113,7 +114,8 @@ class TestExceptionHandlers:
 
         app.dependency_overrides.clear()
 
-    def test_http_exception_handler_request_body_error(self):
+    @pytest.mark.asyncio
+    async def test_http_exception_handler_request_body_error(self):
         """Test HTTP exception handler when request body cannot be read"""
         from unittest.mock import AsyncMock
 
@@ -131,14 +133,7 @@ class TestExceptionHandlers:
         exc = HTTPException(status_code=400, detail="Test error")
 
         # Call the handler directly to test the exception path
-        import asyncio
-
-        async def run_test():
-            result = await http_exception_handler(mock_request, exc)
-            return result
-
-        # This should trigger lines 102-104 in main.py
-        result = asyncio.run(run_test())
+        result = await http_exception_handler(mock_request, exc)
         assert result.status_code == 400
 
     def test_http_exception_handler_400(self):

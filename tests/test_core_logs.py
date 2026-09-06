@@ -33,3 +33,10 @@ class TestCoreLogger:
         with patch.object(logger.logger, "critical") as mock_critical:
             logger.critical("Test critical message")
             mock_critical.assert_called_once_with("Test critical message")
+
+    def test_logger_error(self):
+        """Test logger error method"""
+        logger = MyLogger()
+        with patch.object(logger.logger, "error") as mock_error:
+            logger.error("Test error message")
+            mock_error.assert_called_once_with("Test error message")
