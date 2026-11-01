@@ -1,4 +1,4 @@
-flake8==7.4.1
+flake8==7.5.0
 pre-commit==4.7.0
 pytest==9.2.0
 pytest-asyncio==1.4.0
